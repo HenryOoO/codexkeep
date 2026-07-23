@@ -1,0 +1,49 @@
+{
+  "name": "@henryooo/codexkeep",
+  "version": "0.1.0",
+  "description": "Keep personal Codex skills and portable configuration synchronized through your own Git repository.",
+  "type": "module",
+  "bin": {
+    "codexkeep": "dist/src/cli.js"
+  },
+  "files": [
+    "dist/src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "pnpm build && node --test dist/tests/*.test.js",
+    "prepack": "pnpm build"
+  },
+  "keywords": [
+    "codex",
+    "skills",
+    "git",
+    "sync",
+    "cli"
+  ],
+  "author": "HenryOoO",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HenryOoO/codexkeep.git"
+  },
+  "bugs": {
+    "url": "https://github.com/HenryOoO/codexkeep/issues"
+  },
+  "homepage": "https://github.com/HenryOoO/codexkeep#readme",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.24.0",
+  "dependencies": {
+    "@clack/prompts": "^1.7.0",
+    "js-toml": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^7.0.2"
+  }
+}
