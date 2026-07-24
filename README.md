@@ -16,17 +16,25 @@ Node.js 22 or newer, Git, and macOS are required for the first release.
 
 ## First device
 
+Create an empty private Git repository with your Git provider, then run:
+
+```bash
+codexkeep init git@github.com:your-name/codexkeep-config.git
+```
+
+CodexKeep checks the remote, discovers content exposed through supported Codex
+paths, shows one plan, initializes `~/.codexkeep`, links the official paths,
+and publishes the first version.
+
+You can also start locally:
+
 ```bash
 codexkeep init
+codexkeep remote git@github.com:your-name/codexkeep-config.git
 ```
 
-CodexKeep discovers existing MyCodex data and supported Codex paths, shows one
-plan, and creates `~/.codexkeep`. Add a private Git remote when you are ready:
-
-```bash
-git -C ~/.codexkeep remote add origin git@github.com:your-name/codexkeep-config.git
-codexkeep sync
-```
+Interactive `init` asks whether to connect a remote. Non-interactive
+`codexkeep init --yes` remains local-only unless a Git URL is supplied.
 
 ## Another device
 
@@ -34,8 +42,9 @@ codexkeep sync
 codexkeep init git@github.com:your-name/codexkeep-config.git
 ```
 
-The remote is validated in a temporary directory before any official Codex
-path changes.
+An existing remote is cloned and validated in a temporary directory before any
+official Codex path changes. A reachable populated repository that is not a
+valid CodexKeep repository is rejected without changing local configuration.
 
 ## Commands
 
@@ -43,6 +52,7 @@ path changes.
 | --- | --- |
 | `codexkeep` | Open the interactive menu. |
 | `codexkeep init [git-url]` | Create or connect the private configuration repository. |
+| `codexkeep remote [git-url]` | Show, connect, or replace the private Git remote, then publish. |
 | `codexkeep sync` | Reconcile local configuration and explicitly synchronize Git. |
 | `codexkeep update` | Upgrade sourced skills and plugin marketplaces, then synchronize. |
 | `codexkeep link` | Re-create safe official-path symlinks without network access. |
@@ -50,6 +60,10 @@ path changes.
 
 `--yes` accepts routine confirmations for automation. It never chooses one side
 of a content conflict or replaces an already selected Codex profile.
+
+`codexkeep remote <git-url>` accepts only an empty repository. Use
+`codexkeep init <git-url>` on a new device to join an existing populated
+CodexKeep repository.
 
 ## Data model
 

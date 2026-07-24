@@ -49,9 +49,19 @@ import {
 } from "../services/links.js";
 import { linkSpecs } from "../services/paths.js";
 
-export async function syncCommand(context: AppContext): Promise<number> {
+export interface SyncOptions {
+  readonly confirmationAlreadySatisfied?: boolean;
+  readonly showTitle?: boolean;
+}
+
+export async function syncCommand(
+  context: AppContext,
+  options: SyncOptions = {},
+): Promise<number> {
   const { ui, paths } = context;
-  ui.title("CodexKeep Sync", "同步个人 Codex 配置");
+  if (options.showTitle !== false) {
+    ui.title("CodexKeep Sync", "同步个人 Codex 配置");
+  }
 
   const specs = linkSpecs(paths);
   try {
@@ -238,7 +248,10 @@ export async function syncCommand(context: AppContext): Promise<number> {
   for (const account of missing.accountPlugins) {
     ui.warn(`${account.name} 需要在插件市场安装或登录`);
   }
-  if (!(await ui.confirm("开始同步？"))) {
+  if (
+    !options.confirmationAlreadySatisfied &&
+    !(await ui.confirm("开始同步？"))
+  ) {
     ui.cancelled();
     return 0;
   }

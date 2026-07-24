@@ -3,6 +3,7 @@
 import { checkCommand } from "./commands/check.js";
 import { initCommand } from "./commands/init.js";
 import { linkCommand } from "./commands/link.js";
+import { remoteCommand } from "./commands/remote.js";
 import { syncCommand } from "./commands/sync.js";
 import { updateCommand } from "./commands/update.js";
 import type { AppContext } from "./app.js";
@@ -55,6 +56,7 @@ async function main(argv: readonly string[]): Promise<number> {
           { value: "sync", label: "同步配置" },
           { value: "update", label: "升级并同步" },
           { value: "check", label: "查看状态" },
+          { value: "remote", label: "连接或查看远程仓库" },
           { value: "link", label: "连接当前设备" },
           { value: "init", label: "初始化" },
           { value: "exit", label: "退出" },
@@ -70,6 +72,9 @@ async function main(argv: readonly string[]): Promise<number> {
       case "sync":
         if (args.length > 1) return invalidArguments(ui);
         return await syncCommand(context);
+      case "remote":
+        if (args.length > 2) return invalidArguments(ui);
+        return await remoteCommand(context, args[1]);
       case "update":
         if (args.length > 1) return invalidArguments(ui);
         return await updateCommand(context);
@@ -114,6 +119,7 @@ function printHelp(ui: Ui): void {
   ui.line("");
   ui.line("  codexkeep                  打开方向键菜单");
   ui.line("  codexkeep init [git-url]   初始化或连接私人配置仓库");
+  ui.line("  codexkeep remote [git-url] 查看或连接私人 Git 仓库");
   ui.line("  codexkeep sync             同步个人 Codex 配置");
   ui.line("  codexkeep update           升级第三方来源并同步");
   ui.line("  codexkeep link             连接当前设备");

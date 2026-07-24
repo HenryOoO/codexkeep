@@ -7,7 +7,6 @@ export interface CodexKeepPaths {
   readonly agentsHome: string;
   readonly codexHome: string;
   readonly baseConfig: string;
-  readonly legacyRepo: string;
   readonly lastError: string;
 }
 
@@ -36,7 +35,6 @@ export function createPaths(env: NodeJS.ProcessEnv): CodexKeepPaths {
     agentsHome,
     codexHome,
     baseConfig: join(codexHome, "config.toml"),
-    legacyRepo: env.MYCODEX_HOME ?? join(home, ".mycodex"),
     lastError: join(stateRoot, "last-error.log"),
   };
 }

@@ -1,30 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  emptyInventory,
   mergeInventories,
-  migrateLegacyInventory,
   missingInventory,
   parseInventory,
 } from "../src/domain/inventory.js";
-
-test("migrates legacy plugin inventory into stable JSON data", () => {
-  const inventory = migrateLegacyInventory(`
-# comment
-plugin|demo@custom
-marketplace|custom|https://example.com/custom.git
-account|github|GitHub
-plugin|demo@custom
-`);
-
-  assert.deepEqual(inventory, {
-    version: 1,
-    marketplaces: [
-      { name: "custom", source: "https://example.com/custom.git" },
-    ],
-    plugins: ["demo@custom"],
-    accountPlugins: [{ id: "github", name: "GitHub" }],
-  });
-});
 
 test("normalizes merged inventories and reports missing local items", () => {
   const repository = parseInventory(`{
@@ -63,11 +44,17 @@ test("rejects credentials and query strings in marketplace sources", () => {
 });
 
 test("rejects conflicting marketplace names", () => {
-  const left = migrateLegacyInventory(
-    "marketplace|custom|https://example.com/one.git",
-  );
-  const right = migrateLegacyInventory(
-    "marketplace|custom|https://example.com/two.git",
-  );
+  const left = {
+    ...emptyInventory(),
+    marketplaces: [
+      { name: "custom", source: "https://example.com/one.git" },
+    ],
+  };
+  const right = {
+    ...emptyInventory(),
+    marketplaces: [
+      { name: "custom", source: "https://example.com/two.git" },
+    ],
+  };
   assert.throws(() => mergeInventories(left, right), /Conflicting inventory/u);
 });

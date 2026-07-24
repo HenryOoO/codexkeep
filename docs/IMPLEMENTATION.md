@@ -9,8 +9,8 @@
 ## Milestone 2: safe local ownership
 
 - Create or clone `~/.codexkeep` through a temporary directory.
-- Import MyCodex or supported official paths without copying program history.
-- Convert `plugins.txt` to validated `plugins.json`.
+- Discover supported official paths, including content exposed through symlinks.
+- Store plugin and marketplace inventory as validated `plugins.json`.
 - Extract only portable configuration into the `codexkeep` profile.
 - Reconcile that portable allowlist into the base Codex config because current
   Codex releases do not support a persistent default-profile selector.
@@ -19,6 +19,10 @@
 ## Milestone 3: explicit synchronization
 
 - Discover third-party marketplaces, plugins, and account plugin names.
+- Probe, show, add, or replace an empty private Git remote through
+  `codexkeep remote` without requiring raw Git commands.
+- Let `codexkeep init <git-url>` publish to an empty remote or safely join a
+  populated valid CodexKeep repository.
 - Fetch and compare the configured Git remote only after `codexkeep sync`.
 - Install missing marketplace and plugin entries, commit local changes, rebase, and push.
 - Keep local commits when the remote is offline and preserve both sides when Git reports a conflict.
@@ -31,7 +35,8 @@
 
 ## Verification
 
-- Unit tests for inventory migration and portable TOML filtering.
+- Unit tests for normalized plugin inventory and portable TOML filtering.
 - Filesystem tests for complete link preflight, idempotency, and rollback.
-- CLI smoke tests using an isolated HOME and fake Codex executable.
+- CLI smoke tests for empty, populated, invalid, unreachable, and replaced
+  remotes using an isolated HOME and fake Codex executable.
 - Package smoke test against the packed npm tarball.

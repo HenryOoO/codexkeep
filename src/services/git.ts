@@ -10,6 +10,8 @@ export interface GitOptions {
   readonly allowFailure?: boolean;
 }
 
+export type RemoteState = "empty" | "populated";
+
 export async function git(
   args: readonly string[],
   options: GitOptions,
@@ -38,6 +40,20 @@ export async function cloneRepository(
   });
 }
 
+export async function probeRemote(
+  remote: string,
+  env: NodeJS.ProcessEnv,
+  signal?: AbortSignal,
+): Promise<RemoteState> {
+  validateRemote(remote);
+  const result = await runProcess("git", ["ls-remote", "--", remote], {
+    env,
+    signal,
+    timeoutMs: 120_000,
+  });
+  return result.stdout.trim() ? "populated" : "empty";
+}
+
 export async function initializeRepository(
   cwd: string,
   env: NodeJS.ProcessEnv,
@@ -55,12 +71,33 @@ export async function isGitRepository(options: GitOptions): Promise<boolean> {
 }
 
 export async function hasOrigin(options: GitOptions): Promise<boolean> {
+  return (await originUrl(options)) !== undefined;
+}
+
+export async function originUrl(
+  options: GitOptions,
+): Promise<string | undefined> {
   try {
-    await git(["remote", "get-url", "origin"], options);
-    return true;
+    return await git(["remote", "get-url", "origin"], options);
   } catch {
-    return false;
+    return undefined;
   }
+}
+
+export async function addOrigin(
+  remote: string,
+  options: GitOptions,
+): Promise<void> {
+  validateRemote(remote);
+  await git(["remote", "add", "origin", remote], options);
+}
+
+export async function setOrigin(
+  remote: string,
+  options: GitOptions,
+): Promise<void> {
+  validateRemote(remote);
+  await git(["remote", "set-url", "origin", remote], options);
 }
 
 export async function currentBranch(
@@ -217,24 +254,20 @@ export async function rebaseOnto(
 export async function push(options: GitOptions): Promise<void> {
   const branch = await currentBranch(options);
   if (!branch) throw new Error("Git is not on a named branch.");
+  let hasUpstream = true;
   try {
     await git(["rev-parse", "--abbrev-ref", "@{upstream}"], options);
-    await git(["push"], { ...options, timeoutMs: 180_000 });
-  } catch (error) {
-    if (
-      error instanceof ProcessError &&
-      /no upstream|no upstream branch/iu.test(
-        `${error.result.stderr}\n${error.result.stdout}`,
-      )
-    ) {
-      await git(["push", "-u", "origin", branch], {
-        ...options,
-        timeoutMs: 180_000,
-      });
-      return;
-    }
-    throw error;
+  } catch {
+    hasUpstream = false;
   }
+  if (!hasUpstream) {
+    await git(["push", "-u", "origin", branch], {
+      ...options,
+      timeoutMs: 180_000,
+    });
+    return;
+  }
+  await git(["push"], { ...options, timeoutMs: 180_000 });
 }
 
 export function commitMessage(paths: readonly string[]): string {

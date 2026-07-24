@@ -110,35 +110,6 @@ export function mergeInventories(
   });
 }
 
-export function migrateLegacyInventory(raw: string): PluginInventory {
-  const marketplaces: Marketplace[] = [];
-  const plugins: string[] = [];
-  const accountPlugins: AccountPlugin[] = [];
-
-  for (const sourceLine of raw.split(/\r?\n/u)) {
-    const line = sourceLine.trim();
-    if (!line || line.startsWith("#")) continue;
-    const [kind, identifier, ...rest] = line.split("|");
-    const detail = rest.join("|");
-    if (kind === "marketplace" && identifier && detail) {
-      marketplaces.push({ name: identifier, source: detail });
-    } else if (kind === "plugin" && identifier) {
-      plugins.push(identifier);
-    } else if (kind === "account" && identifier) {
-      accountPlugins.push({ id: identifier, name: detail || identifier });
-    } else {
-      throw new Error(`Unsupported plugins.txt line: ${line}`);
-    }
-  }
-
-  return normalizeInventory({
-    version: INVENTORY_VERSION,
-    marketplaces,
-    plugins,
-    accountPlugins,
-  });
-}
-
 export async function readInventory(path: string): Promise<PluginInventory> {
   return parseInventory(await readFile(path, "utf8"));
 }

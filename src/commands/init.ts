@@ -13,9 +13,11 @@ import {
   readTextIfPresent,
 } from "../services/files.js";
 import {
+  addOrigin,
   cloneRepository,
   commit,
   initializeRepository,
+  probeRemote,
   stageAll,
   stagedFiles,
 } from "../services/git.js";
@@ -27,15 +29,17 @@ import {
 import { linkSpecs } from "../services/paths.js";
 import {
   createWorkspaceSkeleton,
+  ensureWorkspaceDirectories,
   importLocalConfiguration,
 } from "../services/workspace.js";
+import { syncCommand } from "./sync.js";
 
 export async function initCommand(
   context: AppContext,
   remote?: string,
 ): Promise<number> {
   const { ui, paths } = context;
-  ui.title("CodexKeep Init", remote ? "连接私人仓库" : "初始化私人仓库");
+  ui.title("CodexKeep Init", "初始化私人配置");
 
   if (await pathExists(paths.repo)) {
     ui.error(`${paths.repo} 已经存在`);
@@ -43,22 +47,84 @@ export async function initCommand(
     return 1;
   }
 
+  let selectedRemote = remote;
+  if (!selectedRemote && ui.interactive) {
+    const mode = await ui.choose(
+      "配置保存在哪里？",
+      [
+        {
+          value: "remote",
+          label: "连接私人 Git 仓库",
+          hint: "推荐，可在设备间同步",
+        },
+        { value: "local", label: "暂时只保存在本机" },
+      ],
+      "local",
+    );
+    if (mode === "remote") {
+      selectedRemote = await ui.input(
+        "私人 Git 仓库地址",
+        "git@github.com:your-name/codexkeep-config.git",
+      );
+      if (!selectedRemote) {
+        ui.cancelled("未提供 Git 仓库地址，没有修改任何内容。");
+        return 0;
+      }
+    }
+  }
+
+  let remoteState: "empty" | "populated" | undefined;
+  if (selectedRemote) {
+    try {
+      remoteState = await ui.spin("正在检查远程仓库", async () =>
+        await probeRemote(selectedRemote, context.env, context.signal),
+      );
+    } catch {
+      ui.error("无法连接这个 Git 仓库，初始化未开始");
+      ui.info("请确认地址、访问权限和网络连接");
+      return 1;
+    }
+  }
+
   const temporaryRoot = await mkdtemp(join(tmpdir(), "codexkeep-init-"));
   const workspace = join(temporaryRoot, "config");
 
   try {
-    if (remote) {
+    if (selectedRemote && remoteState === "populated") {
       await ui.spin("正在验证私人 Git 仓库", async () => {
-        await cloneRepository(remote, workspace, context.env, context.signal);
+        await cloneRepository(
+          selectedRemote,
+          workspace,
+          context.env,
+          context.signal,
+        );
       });
-      await validateConfigRepository(linkSpecs({ ...paths, repo: workspace }));
+      await ensureWorkspaceDirectories(workspace);
+      try {
+        await validateConfigRepository(linkSpecs({ ...paths, repo: workspace }));
+      } catch {
+        ui.error("这个仓库不是有效的 CodexKeep 配置仓库");
+        ui.info("本机原配置没有变化");
+        return 1;
+      }
     } else {
       await createWorkspaceSkeleton(workspace);
       await initializeRepository(workspace, context.env, context.signal);
+      if (selectedRemote) {
+        await addOrigin(selectedRemote, {
+          cwd: workspace,
+          env: context.env,
+          signal: context.signal,
+        });
+      }
     }
 
     const imported = await ui.spin("正在发现本机 Codex 配置", async () =>
-      await importLocalConfiguration(workspace, context, remote !== undefined),
+      await importLocalConfiguration(
+        workspace,
+        context,
+        remoteState === "populated",
+      ),
     );
 
     const temporarySpecs = linkSpecs({ ...paths, repo: workspace });
@@ -78,7 +144,11 @@ export async function initCommand(
     );
 
     const plan = [
-      remote ? "使用已验证的私人 Git 仓库" : "创建本地私人 Git 仓库",
+      ...(remoteState === "populated"
+        ? ["使用已验证的 CodexKeep 私人仓库"]
+        : selectedRemote
+          ? ["创建配置仓库并连接私人 Git 仓库"]
+          : ["创建本地私人 Git 仓库"]),
       ...imported.actions,
       ...(adopted.length > 0
         ? [`备份并接管 ${adopted.length} 项现有官方路径`]
@@ -112,7 +182,9 @@ export async function initCommand(
     if (staged.length > 0) {
       try {
         await commit(
-          remote ? "chore: import local Codex config" : "chore: initialize CodexKeep",
+          remoteState === "populated"
+            ? "chore: import local Codex config"
+            : "chore: initialize CodexKeep",
           {
             cwd: workspace,
             env: context.env,
@@ -158,11 +230,14 @@ export async function initCommand(
       return 1;
     }
 
-    ui.done(
-      remote
-        ? "初始化完成；运行 codexkeep sync 可同步后续修改"
-        : "初始化完成；添加私人 Git remote 后运行 codexkeep sync",
-    );
+    if (selectedRemote) {
+      ui.success("本机初始化完成");
+      return await syncCommand(context, {
+        confirmationAlreadySatisfied: true,
+        showTitle: false,
+      });
+    }
+    ui.done("初始化完成；运行 codexkeep remote 可连接私人 Git 仓库");
     return 0;
   } catch (error) {
     if (error instanceof Error && /cancelled/iu.test(error.message)) {

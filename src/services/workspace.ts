@@ -7,7 +7,6 @@ import type {
 } from "../domain/inventory.js";
 import {
   emptyInventory,
-  migrateLegacyInventory,
   normalizeInventory,
   readInventoryIfPresent,
   writeInventory,
@@ -28,9 +27,13 @@ export interface ImportResult {
   readonly warnings: readonly string[];
 }
 
-export async function createWorkspaceSkeleton(root: string): Promise<void> {
+export async function ensureWorkspaceDirectories(root: string): Promise<void> {
   await mkdir(join(root, "skills"), { recursive: true });
   await mkdir(join(root, "codex", "agents"), { recursive: true });
+}
+
+export async function createWorkspaceSkeleton(root: string): Promise<void> {
+  await ensureWorkspaceDirectories(root);
   await atomicWrite(
     join(root, "skill-lock.json"),
     `${JSON.stringify({ version: 3, skills: {} }, null, 2)}\n`,
@@ -55,29 +58,14 @@ export async function importLocalConfiguration(
   const actions: string[] = [];
   const warnings: string[] = [];
   const { paths } = context;
-  const legacy = paths.legacyRepo;
 
   const sources = {
-    skills: await preferredSource(
-      join(legacy, "skills"),
-      join(paths.agentsHome, "skills"),
-    ),
-    skillLock: await preferredSource(
-      join(legacy, "skill-lock.json"),
+    skills: await installedSource(join(paths.agentsHome, "skills")),
+    skillLock: await installedSource(
       join(paths.agentsHome, ".skill-lock.json"),
     ),
-    agents: await preferredSource(
-      join(legacy, "codex", "agents"),
-      join(paths.codexHome, "agents"),
-    ),
-    agentsMd: await preferredSource(
-      join(legacy, "codex", "AGENTS.md"),
-      join(paths.codexHome, "AGENTS.md"),
-    ),
-    profile: await preferredSource(
-      join(legacy, "codex", "codexkeep.config.toml"),
-      join(paths.codexHome, "codexkeep.config.toml"),
-    ),
+    agents: await installedSource(join(paths.codexHome, "agents")),
+    agentsMd: await installedSource(join(paths.codexHome, "AGENTS.md")),
   };
 
   if (sources.skills) {
@@ -114,16 +102,11 @@ export async function importLocalConfiguration(
     if (imported) actions.push("导入全局 AGENTS.md");
   }
 
-  const portableSource =
-    sources.profile ??
-    ((await pathExists(paths.baseConfig)) ? paths.baseConfig : undefined);
+  const portableSource = (await pathExists(paths.baseConfig))
+    ? paths.baseConfig
+    : undefined;
   if (portableSource) {
-    let portable: string;
-    if (portableSource === paths.baseConfig) {
-      portable = await readPortableBaseConfig(portableSource);
-    } else {
-      portable = (await readTextIfPresent(portableSource)) ?? "";
-    }
+    const portable = await readPortableBaseConfig(portableSource);
     if (portable.trim()) {
       const imported = await mergeTextContent(
         portable,
@@ -155,16 +138,6 @@ export async function importLocalConfiguration(
   const inventories: PluginInventory[] = [
     await readInventoryIfPresent(join(root, "plugins.json")),
   ];
-  const legacyJson = join(legacy, "plugins.json");
-  const legacyText = join(legacy, "plugins.txt");
-  if (await pathExists(legacyJson)) {
-    inventories.push(await readInventoryIfPresent(legacyJson));
-  } else if (await pathExists(legacyText)) {
-    inventories.push(
-      migrateLegacyInventory(await readFile(legacyText, "utf8")),
-    );
-    actions.push("将 plugins.txt 转换为 plugins.json");
-  }
   try {
     inventories.push(
       await collectCodexInventory({
@@ -193,12 +166,8 @@ export async function importLocalConfiguration(
   return { actions, warnings };
 }
 
-async function preferredSource(
-  legacy: string,
-  official: string,
-): Promise<string | undefined> {
-  if (await pathExists(legacy)) return await resolveContentPath(legacy);
-  if (await pathExists(official)) return await resolveContentPath(official);
+async function installedSource(path: string): Promise<string | undefined> {
+  if (await pathExists(path)) return await resolveContentPath(path);
   return undefined;
 }
 

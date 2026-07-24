@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import {
+  access,
   chmod,
   mkdtemp,
   mkdir,
@@ -112,16 +113,26 @@ esac
   const checked = await exec(process.execPath, [cli, "check"], { env });
   assert.match(checked.stdout, /当前设备状态正常/u);
 
+  const localOnly = await exec(process.execPath, [cli, "remote"], { env });
+  assert.match(localOnly.stdout, /当前仅保存在本机/u);
+
   await git(["init", "--bare", remote], root, env);
-  await git(["remote", "add", "origin", remote], join(home, ".codexkeep"), env);
   const firstPublish = await exec(
     process.execPath,
-    [cli, "sync", "--yes"],
+    [cli, "remote", remote, "--yes"],
     { env },
   );
+  assert.match(firstPublish.stdout, /远程仓库已连接/u);
   assert.match(firstPublish.stdout, /首次发布私人配置仓库/u);
   await git(["--git-dir", remote, "rev-parse", "refs/heads/main"], root, env);
   await git(["--git-dir", remote, "symbolic-ref", "HEAD", "refs/heads/main"], root, env);
+
+  const unchangedRemote = await exec(
+    process.execPath,
+    [cli, "remote", remote, "--yes"],
+    { env },
+  );
+  assert.match(unchangedRemote.stdout, /已经连接，无需修改/u);
 
   await writeFile(
     join(home, ".codexkeep", "skills", "local.md"),
@@ -185,6 +196,131 @@ esac
   );
   assert.match(updatedBaseConfig, /model = "gpt-5.5"/u);
   assert.match(updatedBaseConfig, /local-secret/u);
+
+  const secondHome = join(root, "second-home");
+  await mkdir(join(secondHome, ".codex"), { recursive: true });
+  const secondEnv = {
+    ...env,
+    HOME: secondHome,
+    XDG_STATE_HOME: join(secondHome, ".local", "state"),
+  };
+  const joinedExisting = await exec(
+    process.execPath,
+    [cli, "init", remote, "--yes"],
+    { env: secondEnv },
+  );
+  assert.match(joinedExisting.stdout, /本机初始化完成/u);
+  assert.equal(
+    await readlink(join(secondHome, ".agents", "skills")),
+    join(secondHome, ".codexkeep", "skills"),
+  );
+
+  const emptyRemote = join(root, "empty-init.git");
+  const thirdHome = join(root, "third-home");
+  await git(["init", "--bare", emptyRemote], root, env);
+  await mkdir(join(thirdHome, ".codex"), { recursive: true });
+  const thirdEnv = {
+    ...env,
+    HOME: thirdHome,
+    XDG_STATE_HOME: join(thirdHome, ".local", "state"),
+  };
+  const initializedWithEmptyRemote = await exec(
+    process.execPath,
+    [cli, "init", emptyRemote, "--yes"],
+    { env: thirdEnv },
+  );
+  assert.match(initializedWithEmptyRemote.stdout, /首次发布私人配置仓库/u);
+  await git(
+    ["--git-dir", emptyRemote, "rev-parse", "refs/heads/main"],
+    root,
+    env,
+  );
+
+  const invalidWork = join(root, "invalid-work");
+  const invalidRemote = join(root, "invalid.git");
+  await git(["init", "-b", "main", invalidWork], root, env);
+  await git(["config", "user.name", "Invalid Test"], invalidWork, env);
+  await git(
+    ["config", "user.email", "invalid@example.invalid"],
+    invalidWork,
+    env,
+  );
+  await writeFile(join(invalidWork, "README.md"), "not CodexKeep\n");
+  await git(["add", "README.md"], invalidWork, env);
+  await git(["commit", "-m", "test: invalid repository"], invalidWork, env);
+  await git(["init", "--bare", invalidRemote], root, env);
+  await git(["remote", "add", "origin", invalidRemote], invalidWork, env);
+  await git(["push", "-u", "origin", "main"], invalidWork, env);
+
+  const rejectedRemote = await exec(
+    process.execPath,
+    [cli, "remote", invalidRemote, "--yes"],
+    { env },
+  ).then(
+    () => undefined,
+    (error: unknown) => error as { stderr: string },
+  );
+  assert.match(rejectedRemote?.stderr ?? "", /已有内容/u);
+  assert.equal(
+    await gitOutput(
+      ["remote", "get-url", "origin"],
+      join(home, ".codexkeep"),
+      env,
+    ),
+    remote,
+  );
+
+  const invalidHome = join(root, "invalid-home");
+  await mkdir(join(invalidHome, ".codex"), { recursive: true });
+  const invalidEnv = {
+    ...env,
+    HOME: invalidHome,
+    XDG_STATE_HOME: join(invalidHome, ".local", "state"),
+  };
+  const rejectedInit = await exec(
+    process.execPath,
+    [cli, "init", invalidRemote, "--yes"],
+    { env: invalidEnv },
+  ).then(
+    () => undefined,
+    (error: unknown) => error as { stderr: string },
+  );
+  assert.match(rejectedInit?.stderr ?? "", /不是有效的 CodexKeep/u);
+  await assert.rejects(async () => await access(join(invalidHome, ".codexkeep")));
+
+  const unreachableHome = join(root, "unreachable-home");
+  await mkdir(join(unreachableHome, ".codex"), { recursive: true });
+  const unreachableEnv = {
+    ...env,
+    HOME: unreachableHome,
+    XDG_STATE_HOME: join(unreachableHome, ".local", "state"),
+  };
+  const rejectedUnreachable = await exec(
+    process.execPath,
+    [cli, "init", join(root, "does-not-exist.git"), "--yes"],
+    { env: unreachableEnv },
+  ).then(
+    () => undefined,
+    (error: unknown) => error as { stderr: string },
+  );
+  assert.match(rejectedUnreachable?.stderr ?? "", /无法连接/u);
+  await assert.rejects(
+    async () => await access(join(unreachableHome, ".codexkeep")),
+  );
+
+  const replacement = join(root, "replacement.git");
+  await git(["init", "--bare", replacement], root, env);
+  const replaced = await exec(
+    process.execPath,
+    [cli, "remote", replacement, "--yes"],
+    { env },
+  );
+  assert.match(replaced.stdout, /更换私人 Git 仓库/u);
+  await git(
+    ["--git-dir", replacement, "rev-parse", "refs/heads/main"],
+    root,
+    env,
+  );
 });
 
 async function git(
@@ -193,4 +329,12 @@ async function git(
   env: NodeJS.ProcessEnv,
 ): Promise<void> {
   await exec("git", [...args], { cwd, env });
+}
+
+async function gitOutput(
+  args: readonly string[],
+  cwd: string,
+  env: NodeJS.ProcessEnv,
+): Promise<string> {
+  return (await exec("git", [...args], { cwd, env })).stdout.trim();
 }

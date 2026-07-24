@@ -6,6 +6,7 @@ import {
   outro,
   select,
   spinner,
+  text,
 } from "@clack/prompts";
 
 export interface Choice<T extends string> {
@@ -117,6 +118,20 @@ export class Ui {
       return fallback;
     }
     return result as T;
+  }
+
+  async input(
+    message: string,
+    placeholder?: string,
+  ): Promise<string | undefined> {
+    if (!this.interactive) return undefined;
+    const result = await text({ message, placeholder });
+    if (isCancel(result)) {
+      this.cancelled();
+      return undefined;
+    }
+    const value = result.trim();
+    return value || undefined;
   }
 
   async spin<T>(message: string, action: () => Promise<T>): Promise<T> {
