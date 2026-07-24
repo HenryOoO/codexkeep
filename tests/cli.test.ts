@@ -38,6 +38,20 @@ test("initializes an isolated home and synchronizes local and remote changes", a
   const marketplacesJson = join(root, "marketplaces.json");
   await mkdir(bin, { recursive: true });
   await mkdir(join(home, ".codex"), { recursive: true });
+  await mkdir(join(home, ".agents"), { recursive: true });
+  await writeFile(
+    join(home, ".agents", ".skill-lock.json"),
+    `${JSON.stringify(
+      {
+        version: 3,
+        skills: {},
+        dismissed: { findSkillsPrompt: true },
+        lastSelectedAgents: ["codex"],
+      },
+      null,
+      2,
+    )}\n`,
+  );
   await writeFile(
     join(home, ".codex", "config.toml"),
     `model = "gpt-5"
@@ -108,6 +122,17 @@ esac
       "utf8",
     ),
     /model = "gpt-5"/u,
+  );
+  assert.deepEqual(
+    JSON.parse(
+      await readFile(join(home, ".codexkeep", "skill-lock.json"), "utf8"),
+    ),
+    {
+      version: 3,
+      skills: {},
+      dismissed: { findSkillsPrompt: true },
+      lastSelectedAgents: ["codex"],
+    },
   );
 
   const checked = await exec(process.execPath, [cli, "check"], { env });

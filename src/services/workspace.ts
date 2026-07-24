@@ -275,18 +275,15 @@ async function mergeSkillLock(
   const local = parseSkillLock(await readFile(source, "utf8"));
   const repository = parseSkillLock(await readFile(target, "utf8"));
   const merged = { ...repository.skills };
-  let changed = false;
 
   for (const [name, value] of Object.entries(local.skills)) {
     if (!(name in merged)) {
       merged[name] = value;
-      changed = true;
       continue;
     }
     if (JSON.stringify(merged[name]) === JSON.stringify(value)) continue;
     if (!remoteMode) {
       merged[name] = value;
-      changed = true;
       continue;
     }
     const choice = await context.ui.choose(
@@ -301,14 +298,18 @@ async function mergeSkillLock(
     if (choice === "cancel") throw new Error("Initialization was cancelled.");
     if (choice === "local") {
       merged[name] = value;
-      changed = true;
     }
   }
 
+  const result = {
+    ...(remoteMode ? repository : local),
+    skills: merged,
+  };
+  const changed = JSON.stringify(result) !== JSON.stringify(repository);
   if (changed) {
     await atomicWrite(
       target,
-      `${JSON.stringify({ ...repository, skills: merged }, null, 2)}\n`,
+      `${JSON.stringify(result, null, 2)}\n`,
     );
   }
   return changed;
