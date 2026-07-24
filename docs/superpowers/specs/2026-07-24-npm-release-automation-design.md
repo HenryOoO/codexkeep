@@ -1,195 +1,177 @@
-# npm Release Automation Design
+# npm 发布自动化设计
 
-## Goal
+## 目标
 
-Publish CodexKeep as the unscoped public npm package `codexkeep` and make
-future releases a single local interactive command:
+将 CodexKeep 作为不带 scope 的公开 npm 包 `codexkeep` 发布，并把后续发布
+收敛为一个本地交互式命令：
 
 ```bash
 pnpm release
 ```
 
-The local command prepares and publishes a GitHub Release. A GitHub Actions
-workflow then validates and publishes the matching npm package through npm
-Trusted Publishing.
+本地命令负责准备并发布 GitHub Release。随后，GitHub Actions 工作流验证
+Release，并通过 npm Trusted Publishing 发布对应的 npm 包。
 
-## Scope
+## 范围
 
-This change will:
+本次改动将：
 
-- rename the package from `@henryooo/codexkeep` to `codexkeep`;
-- update the README installation command;
-- use `bumpp` for interactive semantic-version selection and coordinated
-  version replacement;
-- keep the CLI's displayed version synchronized with `package.json`;
-- add a local release orchestrator;
-- add a GitHub Actions workflow triggered by a published GitHub Release;
-- publish through npm Trusted Publishing with OIDC instead of a long-lived
-  npm write token; and
-- document the one-time first-publication bootstrap.
+- 把包名从 `@henryooo/codexkeep` 改为 `codexkeep`；
+- 更新 README 中的安装命令；
+- 使用 `bumpp` 交互式选择语义化版本，并统一更新版本号；
+- 保证 CLI 显示的版本与 `package.json` 保持一致；
+- 增加本地发布编排脚本；
+- 增加由 GitHub Release 发布事件触发的 GitHub Actions 工作流；
+- 通过 npm Trusted Publishing 和 OIDC 发布，不保存长期 npm 写入令牌；
+- 记录首次发布所需的一次性引导流程。
 
-It will not add changelog generation, prerelease publishing, monorepo support,
-or automatic release creation from ordinary pushes to `main`.
+本次改动不包含 changelog 生成、预发布版本发布、monorepo 支持，也不会在普通
+提交推送到 `main` 时自动创建 Release。
 
-## Package Metadata
+## 包元数据
 
-`package.json.name` becomes `codexkeep`, so users install the package with:
+`package.json.name` 改为 `codexkeep`，用户通过以下命令安装：
 
 ```bash
 npm install -g codexkeep
 ```
 
-The existing `bin.codexkeep` mapping remains unchanged. The package will
-explicitly target the public npm registry and public access through
-`publishConfig`, reducing the risk of publishing to an unintended registry.
+现有的 `bin.codexkeep` 映射保持不变。通过 `publishConfig` 明确指定公开 npm
+注册表和公开访问级别，降低误发到其他注册表的风险。
 
-The first release remains `0.1.0`. Later releases must use a new semantic
-version because npm package versions are immutable.
+首次发布版本仍为 `0.1.0`。后续发布必须使用新的语义化版本，因为 npm 上已经
+发布的包版本不可覆盖。
 
-## Local Release Command
+## 本地发布命令
 
-`package.json` exposes only one release entry point:
+`package.json` 只提供一个发布入口：
 
 ```bash
 pnpm release
 ```
 
-The command runs a small Node.js script backed by `bumpp`. No separate
-`release:patch`, `release:minor`, or `release:major` commands are added.
-`bumpp` presents the interactive version choices and asks for confirmation.
+该命令运行一个由 `bumpp` 支撑的小型 Node.js 脚本。不增加
+`release:patch`、`release:minor` 或 `release:major` 等独立命令。`bumpp`
+负责展示交互式版本选项并请求确认。
 
-Before any version or Git mutation, the release script verifies:
+在修改版本或 Git 状态前，发布脚本必须确认：
 
-1. the current branch is `main`;
-2. the worktree and index are clean;
-3. a fresh fetch confirms that `origin/main` exists and the local branch is
-   neither ahead nor behind it;
-4. GitHub CLI is installed and authenticated;
-5. the target package name is `codexkeep`; and
-6. `pnpm check`, `pnpm test`, and `pnpm build` all pass.
+1. 当前分支是 `main`；
+2. 工作区和暂存区均为干净状态；
+3. 完成一次最新的 fetch 后，`origin/main` 存在，且本地分支既不领先也不落后；
+4. GitHub CLI 已安装并完成认证；
+5. 目标包名是 `codexkeep`；
+6. `pnpm check`、`pnpm test` 和 `pnpm build` 全部通过。
 
-After preflight succeeds, `bumpp`:
+预检通过后，`bumpp`：
 
-1. updates `package.json.version`;
-2. replaces the matching hard-coded version in `src/cli.ts`;
-3. runs a pre-commit validation hook that confirms both files contain the same
-   new version;
-4. creates a commit named `chore: release vX.Y.Z`;
-5. creates the Git tag `vX.Y.Z`; and
-6. pushes the commit and tag to `origin`.
+1. 更新 `package.json.version`；
+2. 替换 `src/cli.ts` 中匹配的硬编码版本；
+3. 在提交前运行校验钩子，确认两个文件包含相同的新版本；
+4. 创建提交 `chore: release vX.Y.Z`；
+5. 创建 Git tag `vX.Y.Z`；
+6. 将提交和 tag 推送到 `origin`。
 
-When `bumpp` completes, the Node script reads the new version from
-`package.json` and runs:
+`bumpp` 完成后，Node.js 脚本从 `package.json` 读取新版本并运行：
 
 ```bash
 gh release create vX.Y.Z --verify-tag --generate-notes --title vX.Y.Z
 ```
 
-The GitHub Release is published immediately. Publishing it triggers the npm
-workflow.
+GitHub Release 会立即发布，并触发 npm 发布工作流。
 
-If preflight fails, the script stops before changing versioned files. If the
-GitHub Release command fails after the commit and tag were pushed, it reports
-the exact recovery command. The pushed release commit and tag are preserved;
-the user can safely retry GitHub Release creation without bumping again.
+如果预检失败，脚本必须在修改版本文件前停止。如果提交和 tag 已推送，但
+GitHub Release 创建失败，脚本应输出准确的恢复命令。已经推送的 Release 提交
+和 tag 必须保留，用户可以只重试 GitHub Release 创建，无需再次升级版本。
 
-## Version Synchronization
+## 版本同步
 
-`bumpp` is configured to update both:
+`bumpp` 配置为同时更新：
 
-- `package.json`; and
-- `src/cli.ts`.
+- `package.json`；
+- `src/cli.ts`。
 
-The current version string must be present in both files. Failure to find or
-update the CLI version is treated as a release failure before commit and push.
-The release workflow independently verifies that the GitHub Release tag equals
-`v${package.json.version}`.
+当前版本字符串必须同时存在于两个文件中。若无法找到或更新 CLI 版本，发布应
+在 commit 和 push 之前失败。发布工作流还会独立验证 GitHub Release tag 是否
+等于 `v${package.json.version}`。
 
-## GitHub Actions Publishing
+## GitHub Actions 发布
 
-`.github/workflows/publish.yml` runs only for the `release.published` event and
-only for a non-prerelease GitHub Release.
+`.github/workflows/publish.yml` 只响应 `release.published` 事件，并且只处理
+非预发布状态的 GitHub Release。
 
-The job:
+工作流任务依次：
 
-1. checks out the exact release tag;
-2. installs the repository's pinned pnpm version;
-3. configures Node.js 24 and the public npm registry without dependency-cache
-   reuse;
-4. grants only `contents: read` and `id-token: write`;
-5. installs dependencies with `pnpm install --frozen-lockfile`;
-6. verifies that the release tag matches `package.json.version`;
-7. runs `pnpm check`, `pnpm test`, and `pnpm build`;
-8. runs `npm pack --dry-run` to inspect the publishable package;
-9. checks whether the exact package version already exists; and
-10. runs `npm publish` only when that version is absent.
+1. checkout Release tag 对应的精确提交；
+2. 安装仓库锁定的 pnpm 版本；
+3. 配置 Node.js 24 和公开 npm 注册表，并禁用依赖缓存复用；
+4. 只授予 `contents: read` 和 `id-token: write` 权限；
+5. 使用 `pnpm install --frozen-lockfile` 安装依赖；
+6. 验证 Release tag 与 `package.json.version` 匹配；
+7. 运行 `pnpm check`、`pnpm test` 和 `pnpm build`；
+8. 运行 `npm pack --dry-run` 检查待发布包；
+9. 查询完全相同的包版本是否已经存在；
+10. 仅在该版本不存在时运行 `npm publish`。
 
-The existence check makes reruns and the first-release bootstrap idempotent.
-Registry outages are not treated as “already published”; `npm publish` remains
-the authoritative operation and will fail visibly if the registry is
-unavailable.
+版本存在性检查让工作流重跑和首次发布引导保持幂等。注册表不可用不能被视为
+“版本已经发布”；`npm publish` 仍是权威操作，并应在注册表不可用时明确失败。
 
-The workflow uses npm Trusted Publishing on a GitHub-hosted runner. No
-`NPM_TOKEN` secret is stored. npm automatically attaches provenance when the
-repository and package meet npm's public provenance requirements.
+工作流在 GitHub 托管的 runner 上使用 npm Trusted Publishing，不保存
+`NPM_TOKEN`。当仓库和包满足 npm 的公开来源证明条件时，npm 会自动附加
+provenance。
 
-## First-Publication Bootstrap
+## 首次发布引导
 
-npm cannot configure a trusted publisher for a package that does not yet
-exist. Version `0.1.0` therefore uses this one-time sequence:
+npm 不允许给尚未存在的包配置 trusted publisher，因此 `0.1.0` 使用以下一次性
+流程：
 
-1. merge and push the release automation to `main`;
-2. run the complete local checks and `npm pack --dry-run`;
-3. publish `codexkeep@0.1.0` interactively with npm 2FA;
-4. configure npm Trusted Publishing for:
-   - GitHub owner: `HenryOoO`;
-   - repository: `codexkeep`;
-   - workflow filename: `publish.yml`;
-   - allowed action: `npm publish`;
-5. create the `v0.1.0` GitHub Release from the published commit.
+1. 将发布自动化改动合并并推送到 `main`；
+2. 运行完整本地检查和 `npm pack --dry-run`；
+3. 通过 npm 2FA 交互式发布 `codexkeep@0.1.0`；
+4. 为 npm Trusted Publishing 配置：
+   - GitHub 所有者：`HenryOoO`；
+   - 仓库：`codexkeep`；
+   - 工作流文件名：`publish.yml`；
+   - 允许操作：`npm publish`；
+5. 从已发布代码对应的提交创建 `v0.1.0` GitHub Release。
 
-The workflow triggered by step 5 validates the release and observes that
-`codexkeep@0.1.0` already exists, so it exits successfully without publishing
-again. Every later stable version uses only `pnpm release`.
+第 5 步触发的工作流会完成全部验证，并发现 `codexkeep@0.1.0` 已存在，因此
+成功结束而不会重复发布。此后的每个稳定版本只需运行 `pnpm release`。
 
-## Testing
+## 测试
 
-Implementation verification includes:
+实现阶段必须完成以下验证：
 
-- unit tests for release-script parsing and preflight decisions where logic can
-  be isolated from real Git and GitHub operations;
-- a dry-run or injected-command test proving that no real commit, tag, push,
-  GitHub Release, home directory, or npm publication occurs in tests;
-- existing `pnpm check`, `pnpm test`, and `pnpm build`;
-- `npm pack --dry-run` inspection of package name, version, executable, README,
-  license, and compiled files; and
-- static review of the workflow event, permissions, tag guard, prerelease
-  guard, frozen install, and OIDC publishing step.
+- 对可从真实 Git 和 GitHub 操作中隔离的发布脚本解析逻辑与预检决策编写单元
+  测试；
+- 通过 dry-run 或命令注入测试证明，测试过程中不会产生真实 commit、tag、
+  push、GitHub Release、用户主目录修改或 npm 发布；
+- 运行现有的 `pnpm check`、`pnpm test` 和 `pnpm build`；
+- 使用 `npm pack --dry-run` 检查包名、版本、可执行文件、README、许可证和
+  编译产物；
+- 静态检查工作流的触发事件、权限、tag 防护、预发布防护、冻结安装以及 OIDC
+  发布步骤。
 
-Tests must use temporary repositories and temporary home directories. They
-must never read or mutate the real user home directory.
+测试必须使用临时 Git 仓库和临时主目录，绝不能读取或修改真实用户主目录。
 
-## Failure and Recovery
+## 失败与恢复
 
-- Dirty worktree, wrong branch, missing remote, unsynchronized `main`, missing
-  GitHub authentication, or failed checks: stop before the version bump.
-- Failure while `bumpp` updates files but before push: leave recoverable local
-  state and print the affected paths; never reset or discard user changes.
-- Push succeeds but GitHub Release creation fails: keep the pushed tag and
-  print the exact `gh release create` retry command.
-- GitHub Release validation fails: do not attempt npm publication.
-- The npm version already exists: report it and finish successfully.
-- npm publication fails: leave the GitHub Release and tag intact so the
-  workflow can be rerun after credentials, trust configuration, or registry
-  availability is corrected.
+- 工作区不干净、分支错误、缺少 remote、`main` 未同步、GitHub 未认证或检查
+  失败：在版本升级前停止。
+- `bumpp` 更新文件后、push 前失败：保留可恢复的本地状态并输出受影响的路径；
+  绝不重置或丢弃用户改动。
+- push 成功但 GitHub Release 创建失败：保留已推送的 tag，并输出准确的
+  `gh release create` 重试命令。
+- GitHub Release 验证失败：不得尝试发布 npm 包。
+- npm 上已经存在该版本：报告现状并成功结束。
+- npm 发布失败：保留 GitHub Release 和 tag，以便修复认证、trusted
+  publisher 配置或注册表可用性后重跑工作流。
 
-## Security
+## 安全
 
-- Use npm Trusted Publishing with OIDC for automated releases.
-- Grant the workflow only read access to repository contents and permission to
-  request an OIDC identity token.
-- Do not store npm write tokens in GitHub secrets.
-- Use a GitHub-hosted runner, which npm requires for GitHub trusted publishing.
-- Publish only from a GitHub Release tag whose version matches
-  `package.json.version`.
-- Keep prereleases out of the stable publishing workflow.
+- 自动发布使用 npm Trusted Publishing 和 OIDC。
+- 工作流只获得读取仓库内容和申请 OIDC 身份令牌的权限。
+- 不在 GitHub Secrets 中保存 npm 写入令牌。
+- 使用 npm 对 GitHub Trusted Publishing 要求的 GitHub 托管 runner。
+- 只从版本与 `package.json.version` 匹配的 GitHub Release tag 发布。
+- 预发布版本不进入稳定版本发布工作流。
