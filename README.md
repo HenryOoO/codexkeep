@@ -9,7 +9,7 @@ It is not affiliated with or endorsed by OpenAI.
 ## Install
 
 ```bash
-npm install -g @henryooo/codexkeep
+npm install -g codexkeep
 ```
 
 Node.js 22 or newer, Git, and macOS are required for the first release.
@@ -123,3 +123,21 @@ pnpm build
 
 Tests use isolated temporary home directories and never touch the real user
 configuration.
+
+## Release
+
+Stable releases use one interactive local command:
+
+```bash
+pnpm release
+```
+
+The command verifies a clean, synchronized `main`, runs all checks, asks
+`bumpp` to select the next version, commits and pushes the version and tag, and
+publishes a GitHub Release. The release triggers
+`.github/workflows/publish.yml`, which publishes the matching npm package
+through npm Trusted Publishing.
+
+The initial `codexkeep@0.1.0` publication must be completed interactively
+before configuring the npm trusted publisher for `publish.yml`. No long-lived
+npm write token is stored in GitHub.
