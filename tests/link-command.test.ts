@@ -14,6 +14,7 @@ import { after, test } from "node:test";
 import type { AppContext } from "../src/app.js";
 import { checkCommand } from "../src/commands/check.js";
 import { linkCommand } from "../src/commands/link.js";
+import { initializeRepository } from "../src/services/git.js";
 import { applyLinks, inspectLinks } from "../src/services/links.js";
 import { createPaths, linkSpecs } from "../src/services/paths.js";
 import { createWorkspaceSkeleton } from "../src/services/workspace.js";
@@ -58,7 +59,7 @@ test("links the device and cleans identical legacy skills with one confirmation"
     ),
     "keep",
   );
-  assert.match(ui.output(), /已整理 1 个旧版 skill/u);
+  assert.match(ui.output(), /已整理 1 个旧目录 skill/u);
 });
 
 test("resolves different skills individually even when links are already ready", async () => {
@@ -160,43 +161,132 @@ test("restores a migrated legacy skill when subsequent link preflight fails", as
   assert.match(ui.output(), /原内容已经恢复/u);
 });
 
-test("check remains read-only and points legacy skills to link", async () => {
+test("noninteractive check classifies old-directory skills and remains read-only", async () => {
   const setup = await createSetup("codexkeep-check-legacy-");
   await writeSkill(join(setup.paths.repo, "skills"), "demo", "same");
   await applyLinks(linkSpecs(setup.paths), setup.paths.state, false);
   await writeSkill(join(setup.paths.codexHome, "skills"), "demo", "same");
-  const fakeCodex = join(setup.root, "codex");
-  await writeFile(
-    fakeCodex,
-    `#!/bin/sh
-case "$*" in
-  "plugin list --json") printf '%s\\n' '{"installed":[]}' ;;
-  "plugin marketplace list --json") printf '%s\\n' '{"marketplaces":[]}' ;;
-  *) exit 1 ;;
-esac
-`,
-  );
-  await chmod(fakeCodex, 0o755);
   const ui = new TestUi({ interactive: false, confirmValue: false });
-  const checkSetup = {
-    ...setup,
-    env: {
-      ...setup.env,
-      CODEX_CLI_PATH: fakeCodex,
-      PATH: "/usr/bin:/bin",
-    },
-  };
+  const checkSetup = await withFakeCodex(setup);
 
   const result = await checkCommand(context(checkSetup, ui));
 
   assert.equal(result, 1);
+  assert.match(ui.output(), /1 个重复副本/u);
+  assert.match(ui.output(), /0 个仅存在于旧目录/u);
+  assert.match(ui.output(), /0 个内容冲突/u);
   assert.match(
     ui.output(),
-    /运行 codexkeep link 可安全合并并清理旧副本/u,
+    /运行 codexkeep link 可安全整理这些 skill/u,
   );
   assert.equal(
     await skillText(join(setup.paths.codexHome, "skills"), "demo"),
     "same",
+  );
+});
+
+test("interactive check classifies and repairs every old-directory skill state", async () => {
+  const setup = await createSetup("codexkeep-check-repair-");
+  await writeSkill(join(setup.paths.repo, "skills"), "duplicate", "same");
+  await writeSkill(
+    join(setup.paths.repo, "skills"),
+    "conflict",
+    "repository",
+  );
+  await applyLinks(linkSpecs(setup.paths), setup.paths.state, false);
+  await writeSkill(
+    join(setup.paths.codexHome, "skills"),
+    "duplicate",
+    "same",
+  );
+  await writeSkill(
+    join(setup.paths.codexHome, "skills"),
+    "legacy-only",
+    "legacy",
+  );
+  await writeSkill(
+    join(setup.paths.codexHome, "skills"),
+    "conflict",
+    "legacy",
+  );
+  await initializeRepository(setup.paths.repo, setup.env);
+  const checkSetup = await withFakeCodex(setup);
+  const ui = new TestUi({
+    interactive: true,
+    confirmValue: true,
+    choices: ["legacy"],
+  });
+
+  const result = await checkCommand(context(checkSetup, ui));
+
+  assert.equal(result, 0);
+  assert.equal(ui.confirmCount, 1);
+  assert.match(ui.output(), /1 个重复副本/u);
+  assert.match(ui.output(), /1 个仅存在于旧目录/u);
+  assert.match(ui.output(), /1 个内容冲突/u);
+  assert.match(ui.output(), /已整理 3 个旧目录 skill/u);
+  assert.equal(
+    await skillText(join(setup.paths.repo, "skills"), "duplicate"),
+    "same",
+  );
+  assert.equal(
+    await skillText(join(setup.paths.repo, "skills"), "legacy-only"),
+    "legacy",
+  );
+  assert.equal(
+    await skillText(join(setup.paths.repo, "skills"), "conflict"),
+    "legacy",
+  );
+  for (const name of ["duplicate", "legacy-only", "conflict"]) {
+    await assert.rejects(
+      async () =>
+        await access(join(setup.paths.codexHome, "skills", name)),
+    );
+  }
+});
+
+test("interactive check leaves old-directory skills unchanged when declined", async () => {
+  const setup = await createSetup("codexkeep-check-decline-");
+  await writeSkill(join(setup.paths.repo, "skills"), "demo", "same");
+  await applyLinks(linkSpecs(setup.paths), setup.paths.state, false);
+  await writeSkill(join(setup.paths.codexHome, "skills"), "demo", "same");
+  const checkSetup = await withFakeCodex(setup);
+  const ui = new TestUi({ interactive: true, confirmValue: false });
+
+  const result = await checkCommand(context(checkSetup, ui));
+
+  assert.equal(result, 1);
+  assert.equal(ui.confirmCount, 1);
+  assert.equal(
+    await skillText(join(setup.paths.codexHome, "skills"), "demo"),
+    "same",
+  );
+  assert.match(ui.output(), /稍后可运行 codexkeep link/u);
+});
+
+test("check --yes stays read-only even in an interactive terminal", async () => {
+  const setup = await createSetup("codexkeep-check-yes-");
+  await writeSkill(join(setup.paths.repo, "skills"), "demo", "same");
+  await applyLinks(linkSpecs(setup.paths), setup.paths.state, false);
+  await writeSkill(join(setup.paths.codexHome, "skills"), "demo", "same");
+  const checkSetup = await withFakeCodex(setup);
+  const ui = new TestUi({
+    interactive: true,
+    assumeYes: true,
+    confirmValue: true,
+  });
+
+  const result = await checkCommand(context(checkSetup, ui, true));
+
+  assert.equal(result, 1);
+  assert.equal(ui.confirmCount, 0);
+  assert.equal(
+    await skillText(join(setup.paths.codexHome, "skills"), "demo"),
+    "same",
+  );
+  assert.match(
+    ui.output(),
+    /运行 codexkeep link 可安全整理这些 skill/u,
   );
 });
 
@@ -276,6 +366,29 @@ async function createSetup(prefix: string): Promise<Setup> {
     CODEXKEEP_STATE_DIR: join(root, "state"),
   };
   return { root, paths: createPaths(env), env };
+}
+
+async function withFakeCodex(setup: Setup): Promise<Setup> {
+  const fakeCodex = join(setup.root, "codex");
+  await writeFile(
+    fakeCodex,
+    `#!/bin/sh
+case "$*" in
+  "plugin list --json") printf '%s\\n' '{"installed":[]}' ;;
+  "plugin marketplace list --json") printf '%s\\n' '{"marketplaces":[]}' ;;
+  *) exit 1 ;;
+esac
+`,
+  );
+  await chmod(fakeCodex, 0o755);
+  return {
+    ...setup,
+    env: {
+      ...setup.env,
+      CODEX_CLI_PATH: fakeCodex,
+      PATH: "/usr/bin:/bin",
+    },
+  };
 }
 
 function context(

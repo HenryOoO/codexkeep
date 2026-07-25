@@ -12,9 +12,20 @@ import {
   workingChanges,
 } from "../services/git.js";
 import { inspectLinks } from "../services/links.js";
-import { listLegacySkillNames } from "../services/legacy-skills.js";
+import {
+  applyLegacySkillMigration,
+  createLegacySkillBackupPath,
+  inspectLegacySkills,
+} from "../services/legacy-skills.js";
 import { linkSpecs } from "../services/paths.js";
 import { extractPortableConfig } from "../services/config.js";
+import {
+  legacySkillPlan,
+  legacySkillSummary,
+  reportLegacySkillMigration,
+  reportLegacySkillMigrationError,
+  resolveLegacySkillConflicts,
+} from "./legacy-skills.js";
 
 export async function checkCommand(context: AppContext): Promise<number> {
   const { ui, paths } = context;
@@ -37,14 +48,20 @@ export async function checkCommand(context: AppContext): Promise<number> {
     }
   }
 
-  const unexpectedSkills = await listLegacySkillNames(paths.codexHome);
-  if (unexpectedSkills.length === 0) {
+  const legacySkills = await inspectLegacySkills(
+    paths.codexHome,
+    join(paths.repo, "skills"),
+  );
+  if (legacySkills.entries.length === 0) {
     ui.success("Codex 内置 skills 未纳入同步");
   } else {
     ui.warn(
-      `~/.codex/skills 中还有 ${unexpectedSkills.length} 个非内置 skill，可能重复加载`,
+      `旧目录 ~/.codex/skills 中发现 ${legacySkills.entries.length} 个非内置 skill`,
     );
-    ui.info("运行 codexkeep link 可安全合并并清理旧副本");
+    ui.list(legacySkillSummary(legacySkills.entries));
+    if (!ui.interactive || context.assumeYes) {
+      ui.info("运行 codexkeep link 可安全整理这些 skill");
+    }
     failures += 1;
   }
 
@@ -116,8 +133,52 @@ export async function checkCommand(context: AppContext): Promise<number> {
     }
   }
 
+  let repairedLegacySkills = false;
+  if (
+    legacySkills.entries.length > 0 &&
+    ui.interactive &&
+    !context.assumeYes
+  ) {
+    if (await ui.confirm("现在安全整理这些 skill？")) {
+      const resolutions = await resolveLegacySkillConflicts(
+        context,
+        legacySkills.entries,
+      );
+      if (resolutions) {
+        const backupDir = createLegacySkillBackupPath(paths.state);
+        ui.line("将进行以下 skill 整理：");
+        ui.list(legacySkillPlan(legacySkills.entries, resolutions));
+        ui.info(`旧目录 skill 备份将保存到 ${backupDir}`);
+        try {
+          const migration = await applyLegacySkillMigration(
+            legacySkills,
+            resolutions,
+            backupDir,
+          );
+          reportLegacySkillMigration(ui, migration);
+          repairedLegacySkills = true;
+          failures -= 1;
+        } catch (error) {
+          reportLegacySkillMigrationError(
+            ui,
+            error,
+            "skill 整理未完成，原内容已经恢复",
+          );
+        }
+      } else {
+        ui.info("稍后可运行 codexkeep link 重新整理这些 skill");
+      }
+    } else {
+      ui.info("稍后可运行 codexkeep link 整理这些 skill");
+    }
+  }
+
   if (failures === 0) {
-    ui.done("当前设备状态正常");
+    ui.done(
+      repairedLegacySkills
+        ? "旧目录 skill 已安全整理"
+        : "当前设备状态正常",
+    );
     return 0;
   }
 
