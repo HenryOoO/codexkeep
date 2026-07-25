@@ -1,4 +1,3 @@
-import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { AppContext } from "../app.js";
 import {
@@ -13,6 +12,7 @@ import {
   workingChanges,
 } from "../services/git.js";
 import { inspectLinks } from "../services/links.js";
+import { listLegacySkillNames } from "../services/legacy-skills.js";
 import { linkSpecs } from "../services/paths.js";
 import { extractPortableConfig } from "../services/config.js";
 
@@ -37,13 +37,14 @@ export async function checkCommand(context: AppContext): Promise<number> {
     }
   }
 
-  const unexpectedSkills = await nonBuiltInCodexSkills(paths.codexHome);
+  const unexpectedSkills = await listLegacySkillNames(paths.codexHome);
   if (unexpectedSkills.length === 0) {
     ui.success("Codex 内置 skills 未纳入同步");
   } else {
     ui.warn(
       `~/.codex/skills 中还有 ${unexpectedSkills.length} 个非内置 skill，可能重复加载`,
     );
+    ui.info("运行 codexkeep link 可安全合并并清理旧副本");
     failures += 1;
   }
 
@@ -125,15 +126,4 @@ export async function checkCommand(context: AppContext): Promise<number> {
   }
   ui.done(`发现 ${failures} 项需要处理`);
   return 1;
-}
-
-async function nonBuiltInCodexSkills(codexHome: string): Promise<string[]> {
-  const root = join(codexHome, "skills");
-  try {
-    return (await readdir(root)).filter(
-      (name) => name !== ".system" && name !== ".DS_Store",
-    );
-  } catch {
-    return [];
-  }
 }

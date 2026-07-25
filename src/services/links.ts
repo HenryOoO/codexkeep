@@ -76,35 +76,8 @@ export async function applyLinks(
   stateDir: string,
   adoptExisting: boolean,
 ): Promise<LinkApplyResult> {
-  const status = await inspectLinks(specs);
-  const missingSources = status.filter(
-    (entry) => entry.state === "source-missing",
-  );
-  if (missingSources.length > 0) {
-    throw new Error(
-      `Missing source: ${missingSources.map((entry) => entry.spec.label).join(", ")}`,
-    );
-  }
+  const status = await preflightLinks(specs, adoptExisting);
   const conflicts = status.filter((entry) => entry.state === "conflict");
-  if (conflicts.length > 0 && !adoptExisting) {
-    throw new Error(
-      `Existing content: ${conflicts.map((entry) => entry.spec.target).join(", ")}`,
-    );
-  }
-
-  const parents = [
-    ...new Set(
-      status
-        .filter((entry) => entry.state !== "ready")
-        .map((entry) => dirname(entry.spec.target)),
-    ),
-  ];
-  for (const parent of parents) {
-    if ((await pathExists(parent)) && !(await isDirectory(parent))) {
-      throw new Error(`Link parent is not a directory: ${parent}`);
-    }
-  }
-
   const actionable = status.filter((entry) => entry.state !== "ready");
   if (actionable.length === 0) return { created: [], adopted: [] };
 
@@ -122,7 +95,7 @@ export async function applyLinks(
 
   try {
     if (backupDir) await mkdir(backupDir, { recursive: true });
-    for (const parent of parents) {
+    for (const parent of linkParents(status)) {
       if (!(await pathExists(parent))) {
         await mkdir(parent, { recursive: true });
         createdParents.push(parent);
@@ -165,4 +138,43 @@ export async function applyLinks(
     adopted: backups.map((item) => item.target),
     ...(backupDir === undefined ? {} : { backupDir }),
   };
+}
+
+export async function preflightLinks(
+  specs: readonly LinkSpec[],
+  adoptExisting: boolean,
+): Promise<LinkStatus[]> {
+  const status = await inspectLinks(specs);
+  const missingSources = status.filter(
+    (entry) => entry.state === "source-missing",
+  );
+  if (missingSources.length > 0) {
+    throw new Error(
+      `Missing source: ${missingSources.map((entry) => entry.spec.label).join(", ")}`,
+    );
+  }
+  const conflicts = status.filter((entry) => entry.state === "conflict");
+  if (conflicts.length > 0 && !adoptExisting) {
+    throw new Error(
+      `Existing content: ${conflicts.map((entry) => entry.spec.target).join(", ")}`,
+    );
+  }
+
+  for (const parent of linkParents(status)) {
+    if ((await pathExists(parent)) && !(await isDirectory(parent))) {
+      throw new Error(`Link parent is not a directory: ${parent}`);
+    }
+  }
+
+  return status;
+}
+
+function linkParents(status: readonly LinkStatus[]): string[] {
+  return [
+    ...new Set(
+      status
+        .filter((entry) => entry.state !== "ready")
+        .map((entry) => dirname(entry.spec.target)),
+    ),
+  ];
 }
