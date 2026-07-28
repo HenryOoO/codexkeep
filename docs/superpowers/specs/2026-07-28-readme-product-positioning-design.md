@@ -23,7 +23,7 @@
 - 让 README 第一眼呈现“安全同步工具”，而不是“Node.js 项目”。
 - 用精密、可观察的系统工具气质表达预检、隔离和可恢复写入。
 - 删除 npm、Node.js 和 License 首屏徽章。
-- 使用品牌化横幅和轻量图标导航建立产品仓库的视觉层级。
+- 使用本地化品牌横幅和轻量图标导航建立产品仓库的视觉层级。
 - 避免“大标题 + 三张等宽卖点卡”等模板化、AI 营销页式结构。
 - 让用户在首屏内理解用途、关键边界并进入安装步骤。
 - 保持中英文 README 的事实与章节结构一致。
@@ -79,19 +79,26 @@
 
 ### 品牌横幅
 
-横幅继续使用轻量 SVG，并保持暗色精密控制台方向：
+横幅继续使用轻量 SVG，并保持暗色精密控制台方向。中文与英文分别使用
+`codexkeep-banner.svg` 和 `codexkeep-banner.en.svg`；两张图共享构图、图形、
+尺寸和色彩，仅替换承担语义的界面标签与替代文本。
 
-- 左侧展示 `CodexKeep` 品牌名，以及 `skills`、`instructions`、`agents`、
-  `preferences` 四类可移植内容；
-- 右侧使用 `Mac → Check → Git → Mac` 路由表达同步；
+- 左侧展示 `CodexKeep` 品牌名，以及个人 skills、全局 `AGENTS.md`、自定义
+  agents、白名单偏好和已验证插件清单；
+- 右侧使用“本机 → 预检 → Git → 另一台 Mac”路由表达同步；
 - 预检节点使用绿色状态信号，形成视觉焦点；
-- 凭据、会话和机器路径使用独立的 `Local only` 通道表达；
+- 凭据、会话和机器路径使用独立通道表达，中文标记为“仅限本机”，英文标记为
+  `Local only`；
 - 使用低对比网格、克制的紫色与绿色光晕，以及小型状态读数；
 - 不使用盾牌、锁、保险库等常见安全产品陈词滥调；
-- 不使用中文完整句子，确保同一横幅可用于中英文 README；
 - 横幅即使加载失败，紧邻的 Markdown 文案也必须独立表达完整用途；
 - 保持无脚本、可编辑、体积小于 100 KB，并提供准确的 SVG title、desc 和图片
   alt。
+
+中文横幅使用“Codex 配置同步”“同步路径”“预检就绪”“本机”“预检”“另一台
+Mac”“仅限本机”等中文标签。英文横幅使用对应的自然英文。`CodexKeep`、
+`skills`、`AGENTS.md`、`agents`、`Git` 和 `Mac` 等产品名、文件名或通用专名
+保留原样，不强行翻译。
 
 最终横幅尺寸沿用当前适合 README 的横向比例；实现时允许在当前
 `1600 × 420` 画布内调整构图，不为追求更高画布而增加首屏高度。
@@ -119,15 +126,30 @@ alt，链接文本本身仍提供完整含义。
 
 > 安全同步你的 Codex 配置。
 
-说明文字表达以下完整事实：
+中文说明文字固定为：
 
-- 通过用户自己的私有 Git 仓库同步；
-- 同步 skills、instructions、agents 与可移植偏好；
-- 目标是多台 Mac 保持一致；
-- 凭据、会话与机器专属内容始终留在本机。
+> CodexKeep 通过你自己的私有 Git 仓库，在多台 Mac 间同步经过明确筛选的
+> Codex 配置；凭据、会话与机器专属内容始终留在本机。
 
-英文使用自然对等表达，不逐字直译。文案不使用“无忧”“智能”“零风险”等
-无法验证的营销词。
+具体同步对象不在首屏使用 `instructions`、`agents` 或“偏好”等无边界统称，
+而由后续“同步边界”表明确列出：
+
+- `~/.agents/skills` 中的个人 skills 与来源记录；
+- 全局 `~/.codex/AGENTS.md`；
+- `~/.codex/agents` 中的自定义 agents；
+- 字段白名单、布尔 features、清理后的 skills 配置和使用安全相对路径的 agents
+  配置；
+- 经过验证的第三方 marketplace 与 plugin 清单。
+
+英文说明文字固定为：
+
+> CodexKeep uses your own private Git repository to synchronize a deliberately
+> selected set of Codex configuration across Macs; credentials, sessions, and
+> machine-specific content always stay local.
+
+英文不能把 `global AGENTS.md` 扩大为所有 instructions，或把 allowlisted
+preferences 扩大为全部 preferences。两种语言都不使用“无忧”“智能”“零风险”
+等无法验证的营销词。
 
 ### 非官方归属说明
 
@@ -200,13 +222,15 @@ FAQ 只保留影响用户决策的问题，不重复命令手册。
 - 中文与英文可使用自然表达，但不能出现不同的能力承诺。
 - 主 README 中跳转到详细文档的链接继续使用 GitHub 绝对地址，以兼容 npm
   README 渲染。
-- 新图标和横幅使用语言无关或双语都能理解的图形，避免复制两套视觉资产。
+- 三个导航图标继续共用语言无关的图形；横幅因包含有意义的状态与路径标签而
+  分为中英文两份，不再把英文技术标签视为语言中立。
 
 ## 资产变化
 
 实现会修改或新增：
 
 - `docs/assets/readme/codexkeep-banner.svg`
+- `docs/assets/readme/codexkeep-banner.en.svg`
 - 三个位于 `docs/assets/readme/` 的导航图标 SVG
 - `README.md`
 - `README.en.md`
@@ -222,6 +246,9 @@ FAQ 只保留影响用户决策的问题，不重复命令手册。
 - 两份主 README 不再引用 `img.shields.io`；
 - 两份主 README 不再出现 npm 版本、Node.js 或 License 首屏徽章；
 - 三个图标导航入口在两种语言中均存在，并指向正确章节或对应语言文档；
+- 中文 README 只引用中文横幅，英文 README 只引用英文横幅；
+- 中文横幅不包含 `PREFLIGHT READY`、`LOCAL ONLY` 等英文界面标签；
+- 两张横幅的画布、节点数量、视觉结构和安全边界保持对应；
 - 两份主 README 仍覆盖全部公共命令；
 - 两份主 README 的章节结构与 Mermaid 数量一致；
 - 主 README 不再包含 Mermaid 同步图；
