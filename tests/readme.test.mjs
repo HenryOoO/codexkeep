@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,12 +17,19 @@ const safetyEnglishPath = join(
   "docs",
   "safety-and-recovery.en.md",
 );
-const bannerPath = join(
+const chineseBannerPath = join(
   root,
   "docs",
   "assets",
   "readme",
   "codexkeep-banner.svg",
+);
+const englishBannerPath = join(
+  root,
+  "docs",
+  "assets",
+  "readme",
+  "codexkeep-banner.en.svg",
 );
 const readmeIconNames = [
   "readme-start.svg",
@@ -53,8 +61,12 @@ const publicCommands = [
   "codexkeep remote",
   "codexkeep link",
 ];
-const bannerUrl =
+const chineseBannerUrl =
   "https://raw.githubusercontent.com/HenryOoO/codexkeep/main/docs/assets/readme/codexkeep-banner.svg";
+const englishBannerUrl =
+  "https://raw.githubusercontent.com/HenryOoO/codexkeep/main/docs/assets/readme/codexkeep-banner.en.svg";
+const originalEnglishBannerSha256 =
+  "38aafec81b8d636f93795521b0acfedb0cc9225af25c1c8ace97405a4348db4d";
 const readmeIconUrls = readmeIconNames.map(
   (name) =>
     `https://raw.githubusercontent.com/HenryOoO/codexkeep/main/docs/assets/readme/${name}`,
@@ -68,6 +80,8 @@ test("README.md is the concise Chinese default with a complete English peer", as
 
   assert.match(chinese, /安全同步你的 Codex 配置/u);
   assert.match(english, /Sync your Codex configuration safely/u);
+  assert.match(chinese, /同步经过明确筛选的\s+Codex 配置/u);
+  assert.match(english, /synchronize a deliberately\s+selected set/u);
   assert.match(
     chinese,
     /https:\/\/github\.com\/HenryOoO\/codexkeep\/blob\/main\/README\.en\.md/u,
@@ -93,12 +107,19 @@ test("README.md is the concise Chinese default with a complete English peer", as
   for (const snippet of [
     "npm install -g codexkeep",
     "--yes",
-    bannerUrl,
     ...readmeIconUrls,
   ]) {
     assert.match(chinese, new RegExp(escapeRegExp(snippet), "u"));
     assert.match(english, new RegExp(escapeRegExp(snippet), "u"));
   }
+
+  assert.match(chinese, new RegExp(escapeRegExp(chineseBannerUrl), "u"));
+  assert.doesNotMatch(chinese, new RegExp(escapeRegExp(englishBannerUrl), "u"));
+  assert.match(english, new RegExp(escapeRegExp(englishBannerUrl), "u"));
+  assert.doesNotMatch(
+    english,
+    new RegExp(`${escapeRegExp(chineseBannerUrl)}(?:["\\s])`, "u"),
+  );
 
   for (const marker of [/^## /gmu, /^### /gmu]) {
     assert.equal(
@@ -116,6 +137,8 @@ test("README.md is the concise Chinese default with a complete English peer", as
 
   assert.match(chinese, /<sub>非官方社区项目/u);
   assert.match(english, /<sub>Unofficial community project/u);
+  assert.doesNotMatch(chinese, /skills、instructions/u);
+  assert.doesNotMatch(english, /portable skills,\s+instructions/u);
 });
 
 test("legacy Chinese README points readers to the new default", async () => {
@@ -216,20 +239,85 @@ test("README documents link to their language peers and detailed guides", async 
   assert.doesNotMatch(combined, /\/Users\/|avengerwe@/u);
 });
 
-test("README visual assets stay lightweight and product-focused", async () => {
-  const [banner, source] = await Promise.all([
-    stat(bannerPath),
-    readFile(bannerPath, "utf8"),
+test("README banners preserve the historical three-step design with a text-only Chinese translation", async () => {
+  const [
+    chineseBanner,
+    chineseSource,
+    englishBanner,
+    englishSource,
+  ] = await Promise.all([
+    stat(chineseBannerPath),
+    readFile(chineseBannerPath, "utf8"),
+    stat(englishBannerPath),
+    readFile(englishBannerPath, "utf8"),
   ]);
 
-  assert.ok(banner.size < 100 * 1024, "README banner must stay below 100 KB");
-  assert.match(source, /<title id="title">CodexKeep<\/title>/u);
-  assert.match(source, /CONTROL ROUTE/u);
-  assert.match(source, /PREFLIGHT READY/u);
-  assert.match(source, /LOCAL ONLY/u);
+  for (const [banner, source] of [
+    [chineseBanner, chineseSource],
+    [englishBanner, englishSource],
+  ]) {
+    assert.ok(banner.size < 100 * 1024, "README banner must stay below 100 KB");
+    assert.match(source, /<title id="title">CodexKeep[^<]*<\/title>/u);
+    assert.match(source, /viewBox="0 0 1600 480"/u);
+    assert.doesNotMatch(
+      source,
+      /CONTROL ROUTE|PREFLIGHT READY|LOCAL ONLY/u,
+    );
+  }
+
+  for (const label of [
+    "私有同步拓扑",
+    "预检完成",
+    "本机",
+    "私有 Git",
+    "新 MAC",
+    "凭据留在本机",
+  ]) {
+    assert.match(chineseSource, new RegExp(`>\\s*${label}\\s*<`, "u"));
+  }
   assert.doesNotMatch(
-    source,
-    /Your Codex world|across every machine|PRIVATE SYNC TOPOLOGY/u,
+    chineseSource,
+    /PRIVATE SYNC TOPOLOGY|PREFLIGHT COMPLETE|THIS MAC|NEW MAC|credentials stay local/u,
+  );
+
+  for (const label of [
+    "PRIVATE SYNC TOPOLOGY",
+    "PREFLIGHT COMPLETE",
+    "THIS MAC",
+    "Private Git",
+    "NEW MAC",
+    "credentials stay local",
+  ]) {
+    assert.match(englishSource, new RegExp(`>\\s*${label}\\s*<`, "u"));
+  }
+  assert.equal(
+    createHash("sha256")
+      .update(withoutSyncTrails(englishSource))
+      .digest("hex"),
+    originalEnglishBannerSha256,
+    "English banner without sync trails must match the historical original",
+  );
+  const chineseTrails = syncTrails(chineseSource);
+  const englishTrails = syncTrails(englishSource);
+  assert.equal(
+    chineseTrails,
+    englishTrails,
+    "Chinese and English banners must share identical sync trails",
+  );
+  assert.equal(
+    englishTrails.match(/stroke-dasharray=/gu)?.length ?? 0,
+    3,
+    "Sync trails must contain exactly three dotted data paths",
+  );
+  assert.doesNotMatch(
+    englishTrails,
+    /<(?:text|script|animate)\b/u,
+    "Sync trails must remain decorative, static, and text-free",
+  );
+  assert.equal(
+    withoutBannerText(chineseSource),
+    withoutBannerText(englishSource),
+    "Chinese banner may only replace text from the English master",
   );
 
   const icons = await Promise.all(
@@ -258,4 +346,23 @@ test("package files keep visual and detailed docs out of the npm tarball", async
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+function withoutBannerText(source) {
+  return source.replace(
+    /(<(?:desc|text|title)\b[^>]*>)[\s\S]*?(<\/(?:desc|text|title)>)/gu,
+    "$1$2",
+  );
+}
+
+function syncTrails(source) {
+  const match = source.match(
+    /\n    <g\n      id="sync-trails"[\s\S]*?\n    <\/g>\n(?=\n    <rect\n      x="0\.5")/u,
+  );
+  assert.ok(match, "README banner must contain the sync-trails layer");
+  return match[0];
+}
+
+function withoutSyncTrails(source) {
+  return source.replace(syncTrails(source), "");
 }

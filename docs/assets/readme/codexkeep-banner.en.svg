@@ -6,10 +6,11 @@
   role="img"
   aria-labelledby="title description"
 >
-  <title id="title">CodexKeep — 可移植 Codex 配置</title>
+  <title id="title">CodexKeep — portable Codex configuration</title>
   <desc id="description">
-    Midnight Sync 插图展示可移植的 Codex 配置如何从一台电脑安全地通过私有 Git
-    仓库移动到另一台，同时让凭据留在本机。
+    A Midnight Sync illustration showing portable Codex configuration moving
+    safely from one computer through a private Git repository to another,
+    while credentials stay local.
   </desc>
 
   <defs>
@@ -95,7 +96,7 @@
           font-weight="700"
           letter-spacing="3.4"
         >
-          可移植 CODEX 配置
+          PORTABLE CODEX CONFIG
         </text>
 
         <text
@@ -109,10 +110,10 @@
           CodexKeep
         </text>
         <text x="2" y="145" fill="#b7b9d2" font-size="20">
-          安全同步你的 Codex 世界
+          Your Codex world, safely synchronized
         </text>
         <text x="2" y="176" fill="#b7b9d2" font-size="20">
-          覆盖你使用的每台设备。
+          across every machine you use.
         </text>
 
         <g transform="translate(0 222)" font-size="12" font-weight="650">
@@ -125,7 +126,7 @@
               stroke="#474a79"
             />
             <circle cx="18" cy="17" r="4" fill="#9e90ff" />
-            <text x="31" y="21" fill="#d9d6f8">可移植配置</text>
+            <text x="31" y="21" fill="#d9d6f8">portable config</text>
           </g>
           <g transform="translate(143)">
             <rect
@@ -136,7 +137,7 @@
               stroke="#474a79"
             />
             <circle cx="18" cy="17" r="4" fill="#73d5ff" />
-            <text x="31" y="21" fill="#d9d6f8">默认私有</text>
+            <text x="31" y="21" fill="#d9d6f8">private by default</text>
           </g>
           <g transform="translate(298)">
             <rect
@@ -147,7 +148,7 @@
               stroke="#474a79"
             />
             <circle cx="18" cy="17" r="4" fill="#73e5af" />
-            <text x="31" y="21" fill="#d9d6f8">可恢复写入</text>
+            <text x="31" y="21" fill="#d9d6f8">recoverable writes</text>
           </g>
         </g>
       </g>
@@ -171,7 +172,7 @@
           font-weight="700"
           letter-spacing="2.8"
         >
-          私有同步拓扑
+          PRIVATE SYNC TOPOLOGY
         </text>
         <circle cx="720" cy="39" r="4" fill="#73e5af" />
         <text
@@ -181,7 +182,7 @@
           font-size="11"
           text-anchor="end"
         >
-          预检完成
+          PREFLIGHT COMPLETE
         </text>
 
         <g transform="translate(40 88)">
@@ -249,7 +250,7 @@
               font-weight="650"
               text-anchor="middle"
             >
-              本机
+              THIS MAC
             </text>
           </g>
 
@@ -292,7 +293,7 @@
               font-weight="720"
               text-anchor="middle"
             >
-              私有 Git
+              Private Git
             </text>
             <text
               x="388"
@@ -301,7 +302,7 @@
               font-size="11"
               text-anchor="middle"
             >
-              你的配置基准
+              YOUR SOURCE OF TRUTH
             </text>
           </g>
 
@@ -340,7 +341,7 @@
               font-weight="650"
               text-anchor="middle"
             >
-              新 MAC
+              NEW MAC
             </text>
           </g>
         </g>
@@ -356,11 +357,11 @@
         <g transform="translate(34 304)" font-size="12">
           <circle cx="6" cy="6" r="5" fill="#8e80ff" />
           <text x="20" y="10" fill="#aeb1cf">
-            技能 · 智能体 · 偏好
+            skills · agents · preferences
           </text>
           <circle cx="450" cy="6" r="5" fill="#73e5af" />
           <text x="464" y="10" fill="#b9d8ca">
-            凭据留在本机
+            credentials stay local
           </text>
         </g>
       </g>

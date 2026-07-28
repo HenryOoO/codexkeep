@@ -23,8 +23,8 @@
 <h1 align="center">安全同步你的 Codex 配置。</h1>
 
 <p align="center">
-  CodexKeep 通过你自己的私有 Git 仓库，让可移植的 skills、instructions、
-  agents 和偏好在多台 Mac 间保持一致；凭据、会话与机器专属内容始终留在本机。
+  CodexKeep 通过你自己的私有 Git 仓库，在多台 Mac 间同步经过明确筛选的
+  Codex 配置；凭据、会话与机器专属内容始终留在本机。
 </p>
 
 <p align="center">
@@ -115,8 +115,9 @@ $ codexkeep sync
 
 ### 为什么跨设备同步应该使用私有仓库？
 
-仓库不包含凭据和会话，但会保存你的个人 instructions、skills、agents 和偏好
-设置。纯本地使用不需要远端；跨设备同步时应使用私有仓库。
+仓库不包含凭据和会话，但会保存你的个人 skills、全局 `AGENTS.md`、自定义
+agents、白名单偏好和插件清单。纯本地使用不需要远端；跨设备同步时应使用
+私有仓库。
 
 ### 新设备应该使用 `init` 还是 `link`？
 

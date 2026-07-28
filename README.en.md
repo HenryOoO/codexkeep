@@ -6,8 +6,8 @@
 
 <p align="center">
   <img
-    src="https://raw.githubusercontent.com/HenryOoO/codexkeep/main/docs/assets/readme/codexkeep-banner.svg"
-    alt="CodexKeep synchronizes portable Codex configuration across Macs through a private Git repository controlled by the user."
+    src="https://raw.githubusercontent.com/HenryOoO/codexkeep/main/docs/assets/readme/codexkeep-banner.en.svg"
+    alt="CodexKeep synchronizes a deliberately selected set of Codex configuration across Macs while sensitive, machine-specific content stays local."
     width="100%"
   />
 </p>
@@ -23,9 +23,9 @@
 <h1 align="center">Sync your Codex configuration safely.</h1>
 
 <p align="center">
-  CodexKeep uses your own private Git repository to keep portable skills,
-  instructions, agents, and preferences consistent across Macs, while
-  credentials, sessions, and machine-specific content always stay local.
+  CodexKeep uses your own private Git repository to synchronize a deliberately
+  selected set of Codex configuration across Macs; credentials, sessions, and
+  machine-specific content always stay local.
 </p>
 
 <p align="center">
@@ -123,8 +123,9 @@ for arguments, network access, file changes, and failure behavior.
 ### Why should cross-device sync use a private repository?
 
 The repository excludes credentials and sessions, but it still contains your
-personal instructions, skills, agents, and preferences. Local-only use needs
-no remote; cross-device sync should use a private repository.
+personal skills, global `AGENTS.md`, custom agents, allowlisted preferences,
+and plugin inventory. Local-only use needs no remote; cross-device sync should
+use a private repository.
 
 ### Should a new device use `init` or `link`?
 
