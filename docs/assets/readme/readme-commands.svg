@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img">
+  <title>Command guide</title>
+  <rect width="20" height="20" rx="6" fill="#dbeafe" />
+  <path d="M6 6.5h8M6 10h8M6 13.5h5.5" fill="none" stroke="#1d4ed8" stroke-width="1.55" stroke-linecap="round" />
+</svg>

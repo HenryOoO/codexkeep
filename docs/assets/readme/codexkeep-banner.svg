@@ -1,215 +1,243 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
   width="1600"
-  height="480"
-  viewBox="0 0 1600 480"
+  height="420"
+  viewBox="0 0 1600 420"
   role="img"
   aria-labelledby="title description"
 >
-  <title id="title">CodexKeep — portable Codex configuration</title>
+  <title id="title">CodexKeep</title>
   <desc id="description">
-    A Midnight Sync illustration showing portable Codex configuration moving
-    safely from one computer through a private Git repository to another,
-    while credentials stay local.
+    CodexKeep checks portable Codex configuration before synchronizing it
+    between Macs through a private Git repository, while credentials, sessions,
+    and machine paths stay local.
   </desc>
 
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#090b17" />
-      <stop offset="0.56" stop-color="#14162d" />
-      <stop offset="1" stop-color="#0b0c19" />
+      <stop offset="0" stop-color="#090c13" />
+      <stop offset="0.55" stop-color="#0d111a" />
+      <stop offset="1" stop-color="#07090e" />
     </linearGradient>
-    <radialGradient id="violetGlow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#7867ff" stop-opacity="0.52" />
-      <stop offset="0.48" stop-color="#6555ed" stop-opacity="0.2" />
-      <stop offset="1" stop-color="#6555ed" stop-opacity="0" />
+    <radialGradient id="greenGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#1ccf88" stop-opacity="0.27" />
+      <stop offset="1" stop-color="#1ccf88" stop-opacity="0" />
     </radialGradient>
-    <linearGradient id="vault" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#4d3fa5" />
-      <stop offset="1" stop-color="#262250" />
+    <radialGradient id="violetGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7768f4" stop-opacity="0.23" />
+      <stop offset="1" stop-color="#7768f4" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111722" stop-opacity="0.97" />
+      <stop offset="1" stop-color="#0b1018" stop-opacity="0.97" />
     </linearGradient>
     <linearGradient id="route" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#8b80e4" />
-      <stop offset="0.5" stop-color="#d0c6ff" />
-      <stop offset="1" stop-color="#8b80e4" />
+      <stop offset="0" stop-color="#4b5568" />
+      <stop offset="0.5" stop-color="#7e8aa0" />
+      <stop offset="1" stop-color="#4b5568" />
     </linearGradient>
-    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="18" />
-    </filter>
-    <filter id="cardShadow" x="-30%" y="-40%" width="160%" height="180%">
-      <feDropShadow
-        dx="0"
-        dy="18"
-        stdDeviation="22"
-        flood-color="#02030a"
-        flood-opacity="0.52"
-      />
-    </filter>
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
       <path
-        d="M 40 0 L 0 0 0 40"
+        d="M 32 0 L 0 0 0 32"
         fill="none"
-        stroke="#bcb7ff"
-        stroke-opacity="0.055"
+        stroke="#a9b3c5"
+        stroke-opacity="0.045"
         stroke-width="1"
       />
     </pattern>
+    <filter id="blur" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="34" />
+    </filter>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="170%">
+      <feDropShadow
+        dx="0"
+        dy="18"
+        stdDeviation="24"
+        flood-color="#000000"
+        flood-opacity="0.45"
+      />
+    </filter>
     <clipPath id="frame">
-      <rect width="1600" height="480" rx="28" />
+      <rect width="1600" height="420" rx="28" />
     </clipPath>
   </defs>
 
   <g clip-path="url(#frame)">
-    <rect width="1600" height="480" fill="url(#background)" />
-    <circle
-      cx="1290"
-      cy="82"
-      r="340"
+    <rect width="1600" height="420" fill="url(#background)" />
+    <ellipse
+      cx="1215"
+      cy="58"
+      rx="395"
+      ry="290"
+      fill="url(#greenGlow)"
+      filter="url(#blur)"
+    />
+    <ellipse
+      cx="245"
+      cy="435"
+      rx="390"
+      ry="250"
       fill="url(#violetGlow)"
-      filter="url(#softGlow)"
+      filter="url(#blur)"
     />
-    <circle
-      cx="520"
-      cy="560"
-      r="330"
-      fill="#3157c9"
-      opacity="0.08"
-      filter="url(#softGlow)"
-    />
-    <rect width="1600" height="480" fill="url(#grid)" />
+    <rect width="1600" height="420" fill="url(#grid)" />
 
     <g font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
-      <g transform="translate(88 78)">
-        <rect
-          x="0"
-          y="0"
-          width="7"
-          height="7"
-          rx="3.5"
-          fill="#a799ff"
-        />
-        <text
-          x="21"
-          y="8"
-          fill="#a799ff"
-          font-size="13"
-          font-weight="700"
-          letter-spacing="3.4"
-        >
-          PORTABLE CODEX CONFIG
-        </text>
+      <g transform="translate(82 72)">
+        <g>
+          <circle cx="5" cy="5" r="5" fill="#45dea0" />
+          <circle cx="5" cy="5" r="13" fill="#45dea0" opacity="0.09" />
+          <text
+            x="23"
+            y="10"
+            fill="#8c97aa"
+            font-size="13"
+            font-weight="720"
+            letter-spacing="3.2"
+          >
+            CODEX CONFIG SYNC
+          </text>
+        </g>
 
         <text
           x="0"
-          y="100"
-          fill="#f6f4ff"
-          font-size="76"
-          font-weight="760"
-          letter-spacing="-3.8"
+          y="132"
+          fill="#f6f8fc"
+          font-size="78"
+          font-weight="780"
+          letter-spacing="-4.4"
         >
           CodexKeep
         </text>
-        <text x="2" y="145" fill="#b7b9d2" font-size="20">
-          Your Codex world, safely synchronized
-        </text>
-        <text x="2" y="176" fill="#b7b9d2" font-size="20">
-          across every machine you use.
-        </text>
 
-        <g transform="translate(0 222)" font-size="12" font-weight="650">
+        <g transform="translate(0 183)" font-size="11" font-weight="700">
           <g>
             <rect
-              width="132"
-              height="34"
-              rx="17"
-              fill="#282a51"
-              stroke="#474a79"
+              width="83"
+              height="31"
+              rx="6"
+              fill="#121925"
+              stroke="#2b3544"
             />
-            <circle cx="18" cy="17" r="4" fill="#9e90ff" />
-            <text x="31" y="21" fill="#d9d6f8">portable config</text>
+            <text x="41.5" y="20" fill="#8e99ab" text-anchor="middle">
+              SKILLS
+            </text>
           </g>
-          <g transform="translate(143)">
+          <g transform="translate(92)">
             <rect
-              width="144"
-              height="34"
-              rx="17"
-              fill="#282a51"
-              stroke="#474a79"
+              width="126"
+              height="31"
+              rx="6"
+              fill="#121925"
+              stroke="#2b3544"
             />
-            <circle cx="18" cy="17" r="4" fill="#73d5ff" />
-            <text x="31" y="21" fill="#d9d6f8">private by default</text>
+            <text x="63" y="20" fill="#8e99ab" text-anchor="middle">
+              INSTRUCTIONS
+            </text>
           </g>
-          <g transform="translate(298)">
+          <g transform="translate(227)">
             <rect
-              width="151"
-              height="34"
-              rx="17"
-              fill="#282a51"
-              stroke="#474a79"
+              width="87"
+              height="31"
+              rx="6"
+              fill="#121925"
+              stroke="#2b3544"
             />
-            <circle cx="18" cy="17" r="4" fill="#73e5af" />
-            <text x="31" y="21" fill="#d9d6f8">recoverable writes</text>
+            <text x="43.5" y="20" fill="#8e99ab" text-anchor="middle">
+              AGENTS
+            </text>
           </g>
+          <g transform="translate(323)">
+            <rect
+              width="112"
+              height="31"
+              rx="6"
+              fill="#121925"
+              stroke="#2b3544"
+            />
+            <text x="56" y="20" fill="#8e99ab" text-anchor="middle">
+              PREFERENCES
+            </text>
+          </g>
+        </g>
+
+        <g transform="translate(0 259)">
+          <line
+            x1="0"
+            y1="0"
+            x2="435"
+            y2="0"
+            stroke="#26303e"
+            stroke-width="1"
+          />
+          <text
+            x="0"
+            y="27"
+            fill="#5f6b7d"
+            font-size="11"
+            font-weight="650"
+            letter-spacing="1.7"
+          >
+            EXPLICIT · PRIVATE · RECOVERABLE
+          </text>
         </g>
       </g>
 
-      <g transform="translate(742 68)">
+      <g transform="translate(650 42)" filter="url(#shadow)">
         <rect
-          width="786"
-          height="344"
-          rx="24"
-          fill="#101329"
-          fill-opacity="0.84"
-          stroke="#7d72d7"
-          stroke-opacity="0.36"
-          filter="url(#cardShadow)"
+          width="878"
+          height="336"
+          rx="22"
+          fill="url(#panel)"
+          stroke="#293445"
         />
-        <text
-          x="32"
-          y="43"
-          fill="#898daf"
-          font-size="11"
-          font-weight="700"
-          letter-spacing="2.8"
-        >
-          PRIVATE SYNC TOPOLOGY
-        </text>
-        <circle cx="720" cy="39" r="4" fill="#73e5af" />
-        <text
-          x="704"
-          y="43"
-          fill="#9ba0bd"
-          font-size="11"
-          text-anchor="end"
-        >
-          PREFLIGHT COMPLETE
-        </text>
+        <rect
+          x="1"
+          y="1"
+          width="876"
+          height="334"
+          rx="21"
+          fill="none"
+          stroke="#ffffff"
+          stroke-opacity="0.025"
+        />
 
-        <g transform="translate(40 88)">
+        <g transform="translate(32 27)">
+          <text
+            x="0"
+            y="9"
+            fill="#697588"
+            font-size="11"
+            font-weight="720"
+            letter-spacing="2.2"
+          >
+            CONTROL ROUTE · 01
+          </text>
+          <circle cx="664" cy="5" r="4" fill="#45dea0" />
+          <circle cx="664" cy="5" r="10" fill="#45dea0" opacity="0.08" />
+          <text
+            x="684"
+            y="9"
+            fill="#79dfae"
+            font-size="11"
+            font-weight="720"
+            letter-spacing="1.4"
+          >
+            PREFLIGHT READY
+          </text>
+        </g>
+
+        <g transform="translate(40 84)">
           <path
-            d="M 178 80 H 290"
+            d="M 140 56 H 198 M 340 56 H 398 M 540 56 H 598"
             fill="none"
             stroke="url(#route)"
             stroke-width="2"
           />
           <path
-            d="M 486 80 H 580"
+            d="M 188 49 L 198 56 188 63 M 388 49 L 398 56 388 63 M 588 49 L 598 56 588 63"
             fill="none"
-            stroke="url(#route)"
-            stroke-width="2"
-          />
-          <path
-            d="M 280 72 L 290 80 280 88"
-            fill="none"
-            stroke="#b9abff"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M 570 72 L 580 80 570 88"
-            fill="none"
-            stroke="#b9abff"
+            stroke="#7d899c"
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -217,165 +245,193 @@
 
           <g>
             <rect
-              x="0"
-              y="19"
-              width="178"
-              height="122"
-              rx="16"
-              fill="#181b38"
-              stroke="#4c507f"
-            />
-            <rect
-              x="49"
-              y="43"
-              width="80"
-              height="51"
-              rx="6"
-              fill="none"
-              stroke="#8f94c5"
-              stroke-width="2"
-            />
-            <path
-              d="M 38 104 H 140 L 130 114 H 48 Z"
-              fill="#262b56"
-              stroke="#8f94c5"
-              stroke-width="2"
-              stroke-linejoin="round"
-            />
-            <text
-              x="89"
-              y="166"
-              fill="#d8daf4"
-              font-size="13"
-              font-weight="650"
-              text-anchor="middle"
-            >
-              THIS MAC
-            </text>
-          </g>
-
-          <g>
-            <circle
-              cx="388"
-              cy="80"
-              r="98"
-              fill="#6858ee"
-              opacity="0.24"
-              filter="url(#softGlow)"
-            />
-            <rect
-              x="290"
-              y="0"
-              width="196"
-              height="160"
-              rx="25"
-              fill="url(#vault)"
-              stroke="#b4a7ff"
+              width="140"
+              height="112"
+              rx="12"
+              fill="#111824"
+              stroke="#344052"
             />
             <g
-              transform="translate(364 29)"
+              transform="translate(48 18)"
               fill="none"
-              stroke="#e9e5ff"
-              stroke-width="3"
+              stroke="#8490a3"
+              stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <rect x="0" y="20" width="48" height="38" rx="8" />
-              <path d="M 10 20 V 12 C 10 -3 38 -3 38 12 V 20" />
-              <circle cx="24" cy="39" r="3" fill="#e9e5ff" stroke="none" />
-              <path d="M 24 42 V 49" />
+              <rect width="44" height="29" rx="3" />
+              <path d="M -6 37 H 50 L 45 42 H -1 Z" fill="#182231" />
             </g>
             <text
-              x="388"
-              y="110"
-              fill="#f5f2ff"
-              font-size="17"
-              font-weight="720"
-              text-anchor="middle"
-            >
-              Private Git
-            </text>
-            <text
-              x="388"
-              y="132"
-              fill="#c4bee9"
+              x="70"
+              y="88"
+              fill="#aab3c1"
               font-size="11"
+              font-weight="730"
+              letter-spacing="1.5"
               text-anchor="middle"
             >
-              YOUR SOURCE OF TRUTH
+              MAC
             </text>
           </g>
 
-          <g>
+          <g transform="translate(200)">
             <rect
-              x="580"
-              y="19"
-              width="148"
-              height="122"
-              rx="16"
-              fill="#181b38"
-              stroke="#4c507f"
+              width="140"
+              height="112"
+              rx="12"
+              fill="#101c1a"
+              stroke="#35bd82"
+              stroke-opacity="0.9"
             />
-            <rect
-              x="614"
-              y="43"
-              width="80"
-              height="51"
-              rx="6"
-              fill="none"
-              stroke="#8f94c5"
+            <circle
+              cx="70"
+              cy="34"
+              r="22"
+              fill="#163229"
+              stroke="#45dea0"
               stroke-width="2"
             />
             <path
-              d="M 603 104 H 705 L 695 114 H 613 Z"
-              fill="#262b56"
-              stroke="#8f94c5"
-              stroke-width="2"
+              d="M 59 34 L 67 42 82 25"
+              fill="none"
+              stroke="#80e8b8"
+              stroke-width="3"
+              stroke-linecap="round"
               stroke-linejoin="round"
             />
             <text
-              x="654"
-              y="166"
-              fill="#d8daf4"
-              font-size="13"
-              font-weight="650"
+              x="70"
+              y="88"
+              fill="#8ce9bd"
+              font-size="11"
+              font-weight="730"
+              letter-spacing="1.5"
               text-anchor="middle"
             >
-              NEW MAC
+              CHECK
+            </text>
+          </g>
+
+          <g transform="translate(400)">
+            <rect
+              width="140"
+              height="112"
+              rx="12"
+              fill="#111824"
+              stroke="#344052"
+            />
+            <g
+              transform="translate(48 14)"
+              fill="none"
+              stroke="#8c98aa"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="8" cy="10" r="5" />
+              <circle cx="34" cy="24" r="5" />
+              <circle cx="8" cy="43" r="5" />
+              <path d="M 8 15 V 38 M 13 13 C 28 13 19 24 29 24" />
+            </g>
+            <text
+              x="70"
+              y="88"
+              fill="#aab3c1"
+              font-size="11"
+              font-weight="730"
+              letter-spacing="1.5"
+              text-anchor="middle"
+            >
+              GIT
+            </text>
+          </g>
+
+          <g transform="translate(600)">
+            <rect
+              width="140"
+              height="112"
+              rx="12"
+              fill="#111824"
+              stroke="#344052"
+            />
+            <g
+              transform="translate(48 18)"
+              fill="none"
+              stroke="#8490a3"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect width="44" height="29" rx="3" />
+              <path d="M -6 37 H 50 L 45 42 H -1 Z" fill="#182231" />
+            </g>
+            <text
+              x="70"
+              y="88"
+              fill="#aab3c1"
+              font-size="11"
+              font-weight="730"
+              letter-spacing="1.5"
+              text-anchor="middle"
+            >
+              MAC
             </text>
           </g>
         </g>
 
-        <line
-          x1="32"
-          y1="282"
-          x2="754"
-          y2="282"
-          stroke="#3d4164"
-          stroke-opacity="0.8"
-        />
-        <g transform="translate(34 304)" font-size="12">
-          <circle cx="6" cy="6" r="5" fill="#8e80ff" />
-          <text x="20" y="10" fill="#aeb1cf">
-            skills · agents · preferences
-          </text>
-          <circle cx="450" cy="6" r="5" fill="#73e5af" />
-          <text x="464" y="10" fill="#b9d8ca">
-            credentials stay local
-          </text>
+        <g transform="translate(40 225)">
+          <rect
+            width="798"
+            height="72"
+            rx="11"
+            fill="#0b1119"
+            stroke="#303b4b"
+            stroke-dasharray="5 6"
+          />
+          <g transform="translate(22 22)">
+            <circle cx="7" cy="14" r="7" fill="#17241f" stroke="#3a8d67" />
+            <path
+              d="M 4 14 L 6.5 16.5 11 11.5"
+              fill="none"
+              stroke="#63d9a0"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <text
+              x="30"
+              y="18"
+              fill="#687587"
+              font-size="10"
+              font-weight="690"
+              letter-spacing="1.25"
+            >
+              CREDENTIALS · SESSIONS · MACHINE PATHS
+            </text>
+          </g>
+          <g transform="translate(667 18)">
+            <rect
+              width="109"
+              height="36"
+              rx="7"
+              fill="#10251d"
+              stroke="#2c6f51"
+            />
+            <text
+              x="54.5"
+              y="23"
+              fill="#71dba9"
+              font-size="10"
+              font-weight="740"
+              letter-spacing="1.1"
+              text-anchor="middle"
+            >
+              LOCAL ONLY
+            </text>
+          </g>
         </g>
       </g>
     </g>
-
-    <rect
-      x="0.5"
-      y="0.5"
-      width="1599"
-      height="479"
-      rx="27.5"
-      fill="none"
-      stroke="#9790d8"
-      stroke-opacity="0.2"
-    />
   </g>
 </svg>

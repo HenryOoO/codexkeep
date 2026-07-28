@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img">
+  <title>Safety and recovery</title>
+  <rect width="20" height="20" rx="6" fill="#ede9fe" />
+  <circle cx="10" cy="10" r="5.25" fill="none" stroke="#6d28d9" stroke-width="1.45" />
+  <path d="m7.25 10.2 1.75 1.7 3.75-4" fill="none" stroke="#6d28d9" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
